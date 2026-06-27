@@ -3,8 +3,8 @@ name: Build SplitTab
 on:
   push:
     tags:
-      - 'v*'          # triggers on: git tag v2.0.0 && git push --tags
-  workflow_dispatch:  # allows manual trigger from GitHub Actions tab
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   # ── Windows .exe ──────────────────────────────────────────────────
@@ -12,65 +12,64 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npm install
-      - run: npm run build               # copies index.html → www/
-      - run: npm run electron:build:win
-      - uses: actions/upload-artifact@v4
-        with:
-          name: SplitTab-Windows
-          path: dist-electron/*.exe
 
-  # ── macOS .dmg ────────────────────────────────────────────────────
-  build-mac:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npm install
-      - run: npm run build
-      - run: npm run electron:build:mac
-      - uses: actions/upload-artifact@v4
         with:
-          name: SplitTab-macOS
-          path: dist-electron/*.dmg
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Copy index.html to www/
+        run: node scripts/build.js
+
+      - name: Build Windows exe
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SplitTab-Windows-exe
+          path: dist-electron/*.exe
 
   # ── Android APK ───────────────────────────────────────────────────
   build-android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - run: npm install
-      - run: npm run build
-      - run: npx cap sync android
-      - name: Build APK
-        working-directory: android
-        run: ./gradlew assembleRelease
-      - uses: actions/upload-artifact@v4
-        with:
-          name: SplitTab-Android
-          path: android/app/build/outputs/apk/release/*.apk
 
-  # ── NOTE: iOS requires a Mac runner with paid GitHub minutes ──────
-  # Uncomment if you have access to macOS runner with Xcode:
-  #
-  # build-ios:
-  #   runs-on: macos-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with: { node-version: '20' }
-  #     - run: npm install
-  #     - run: npm run build
-  #     - run: npx cap sync ios
-  #     - run: xcodebuild -workspace ios/App/App.xcworkspace
-  #              -scheme App -configuration Release
-  #              -archivePath ios/App.xcarchive archive
+      - name: Install dependencies
+        run: npm install
+
+      - name: Copy index.html to www/
+        run: node scripts/build.js
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SplitTab-Android-apk
+          path: android/app/build/outputs/apk/debug/*.apk
