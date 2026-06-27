@@ -1,0 +1,55 @@
+{
+  "name": "splittab",
+  "version": "2.0.0",
+  "description": "SplitTab — Bill splitting app with cloud sync",
+  "main": "electron/main.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "electron:dev": "electron .",
+    "electron:build:win": "npx electron-builder --win",
+    "electron:build:mac": "npx electron-builder --mac",
+    "electron:build:linux": "npx electron-builder --linux"
+  },
+  "keywords": ["splittab", "bill-splitting", "expense-tracker"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.yourname.splittab",
+    "productName": "SplitTab",
+    "icon": "assets/icon.png",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "www/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
+  }
+}

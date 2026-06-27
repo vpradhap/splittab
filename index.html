@@ -1,0 +1,2811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SplitTab">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6366f1">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%234f46e5'/%3E%3Ctext y='72' x='12' font-size='68'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
+<title>SplitTab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+.flag{font-family:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:16px;line-height:1;display:inline-block;vertical-align:middle}
+:root{
+  --bg0:#0f172a;--bg1:#111827;--bg2:#1a2332;--bg3:#1f2937;--bg4:#374151;
+  --border:#374151;--text:#ffffff;--muted:#9ca3af;--dim:#6b7280;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;--lblue:#60a5fa;
+  --indigo:#6366f1;--violet:#7c3aed;--lime:#a3e635;--amber:#f59e0b;--cyan:#93c5fd;
+  --card-shadow:0 0 0 1px rgba(255,255,255,.07),0 32px 80px rgba(0,0,0,.7),0 8px 24px rgba(99,102,241,.15);
+}
+html.light{
+  --bg0:#bfcde8;--bg1:#d6e0f4;--bg2:#dde7f7;--bg3:#e5edfb;--bg4:#c8d6ee;
+  --border:#a8bcd8;--text:#0f1f45;--muted:#3a5075;--dim:#5a6f96;
+  --green:#15803d;--red:#b91c1c;--blue:#1d4ed8;--lblue:#2563eb;
+  --indigo:#3730a3;--violet:#6d28d9;--lime:#3f6212;--amber:#92400e;--cyan:#0e7490;
+  --card-shadow:0 0 0 1px rgba(0,0,0,.1),0 20px 60px rgba(0,0,0,.18),0 4px 16px rgba(55,48,163,.12);
+}
+html.light body{background:linear-gradient(135deg,#c7d5f0 0%,#cbc8f5 50%,#d4c8f5 100%);background-attachment:fixed}
+html.light{background:#c7d5f0}
+html.light #app{background:var(--bg1);box-shadow:var(--card-shadow)}
+@media(max-width:519px){html.light #app{box-shadow:none}}
+html.light .trips-header{border-bottom-color:rgba(100,120,170,.35)}
+html.light .header{background:var(--bg1);border-bottom-color:rgba(100,120,170,.35)}
+html.light .app-title{background:linear-gradient(135deg,#1a2848 0%,#3730a3 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+html.light .icon-btn{background:var(--bg3);border-color:var(--border);color:var(--muted)}
+html.light .icon-btn:hover{background:var(--bg4);color:var(--text)}
+html.light .theme-toggle-btn{background:var(--bg3);border-color:var(--border)}
+html.light .theme-toggle-btn:hover{background:var(--bg4)}
+html.light .tab-bar{background:var(--bg0);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+html.light .tab-btn{color:var(--dim)}
+html.light .tab-btn.active{background:linear-gradient(135deg,var(--bg2),var(--bg3));color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.5)}
+html.light .trip-card{background:var(--bg3);border-color:var(--border)}
+html.light .trip-card:hover{background:var(--bg2);border-color:#7c8fcc}
+html.light .trip-card.selected{border-color:var(--indigo);background:rgba(55,48,163,.07)}
+html.light .trip-card.select-mode:hover{background:var(--bg3)}
+html.light .trip-card.select-mode.selected:hover{background:rgba(55,48,163,.07)}
+html.light .trip-cb-circle{border-color:var(--border);background:var(--bg0)}
+html.light .trip-cb-circle.checked{background:var(--indigo);border-color:var(--indigo);color:#fff}
+html.light #trip-select-bar{background:var(--bg1);border-top-color:var(--border)}
+html.light .sel-bar-cancel{background:var(--bg0);border-color:var(--border);color:var(--muted)}
+html.light .sel-bar-cancel:hover{background:var(--bg4);color:var(--text)}
+html.light .sel-bar-del{background:rgba(185,28,28,.1);border-color:rgba(185,28,28,.3);color:var(--red)}
+html.light .new-trip-btn{border-color:#8a9bc4;color:var(--dim)}
+html.light .new-trip-btn:hover{border-color:var(--indigo);color:var(--indigo);background:rgba(55,48,163,.06)}
+html.light input,html.light select{background:var(--bg0);border-color:var(--border);color:var(--text)}
+html.light input:focus,html.light select:focus{border-color:rgba(55,48,163,.6);box-shadow:0 0 0 3px rgba(55,48,163,.12)}
+html.light input::placeholder{color:var(--dim)}
+html.light .person-row{background:var(--bg3);border-color:var(--border)}
+html.light .person-row:hover{border-color:#7c8fcc}
+html.light .remove-btn{background:var(--bg0);color:var(--muted)}
+html.light .remove-btn:hover{background:rgba(185,28,28,.15);color:var(--red)}
+html.light .add-btn{border-color:#8a9bc4;color:var(--dim)}
+html.light .add-btn:hover{border-color:var(--indigo);color:var(--indigo);background:rgba(55,48,163,.06)}
+html.light .next-btn{background:linear-gradient(135deg,#3730a3,#6d28d9)}
+html.light .pay-card{background:var(--bg3);border-color:var(--border)}
+html.light .amt-wrap{background:var(--bg0);border-color:var(--border)}
+html.light .method-pill{background:var(--bg4);border-color:var(--border);color:var(--muted)}
+html.light .method-pill.active-cash{border-color:#15803d;color:#15803d;background:rgba(21,128,61,.1)}
+html.light .method-pill.active-card{border-color:#1d4ed8;color:#1d4ed8;background:rgba(29,78,216,.1)}
+html.light .field-row select{background:var(--bg0)}
+html.light .split-toggle{background:var(--bg0);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+html.light .split-toggle-btn.active{background:var(--bg3);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+html.light .split-box{background:var(--bg0);border-color:var(--border)}
+html.light .person-chip{background:var(--bg3);border-color:var(--border);color:var(--muted)}
+html.light .summary-section{background:var(--bg3);border-color:var(--border)}
+html.light .total-card{background:linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)}
+html.light .settle-badge{background:linear-gradient(135deg,#172554,#1e3a8a)}
+html.light #currency-dropdown{background:var(--bg2);border-color:var(--border);box-shadow:0 12px 32px rgba(0,0,0,.18)}
+html.light .currency-option{border-bottom-color:rgba(100,120,170,.25)}
+html.light .currency-btn{background:var(--bg3);border-color:var(--border)}
+html.light .currency-btn:hover{background:var(--bg4)}
+html.light .modal-overlay{background:rgba(10,20,60,.45)}
+html.light .modal{background:var(--bg2);box-shadow:0 8px 40px rgba(0,0,0,.25)}
+html.light .modal-header{border-bottom-color:var(--border)}
+html.light .modal-footer{border-top-color:var(--border)}
+html.light .modal-input{background:var(--bg0);border-color:var(--border);color:var(--text)}
+html.light .btn-secondary{background:var(--bg0);border-color:var(--border);color:var(--muted)}
+html.light .btn-secondary:hover{background:var(--bg4);color:var(--text)}
+html.light .fmt-sheet{background:var(--bg2);box-shadow:0 -4px 32px rgba(0,0,0,.18)}
+html.light .fmt-handle{background:var(--border)}
+html.light .fmt-btn{background:var(--bg3);border-color:var(--border)}
+html.light .fmt-btn:hover{background:var(--bg4);border-color:#7c8fcc}
+html.light .date-header-total{background:rgba(55,48,163,.12);color:var(--indigo)}
+html.light #install-banner{background:linear-gradient(135deg,rgba(55,48,163,.12),rgba(109,40,217,.1));border-color:rgba(55,48,163,.25)}
+html.light .io-btn{background:var(--bg3);border-color:var(--border);color:var(--muted)}
+html.light .io-btn:hover{background:var(--bg4);color:var(--text)}
+html.light .io-btn.download{border-color:rgba(55,48,163,.4);color:var(--indigo)}
+html.light .io-btn.download:hover{background:rgba(55,48,163,.1);border-color:var(--indigo)}
+html.light .content::-webkit-scrollbar-thumb{background:var(--border)}
+html.light .budget-bar-wrap{background:var(--bg3);border-color:var(--border)}
+html.light .cat-pill{background:var(--bg4);border-color:var(--border);color:var(--muted)}
+html.light .cat-pill.active{border-color:var(--indigo);color:var(--indigo);background:rgba(55,48,163,.1)}
+html.light .chart-card{background:var(--bg3);border-color:var(--border)}
+html.light .settle-record-btn{background:rgba(55,48,163,.1);border-color:rgba(55,48,163,.3);color:var(--indigo)}
+html.light .settle-record-btn:hover{background:rgba(55,48,163,.2)}
+html.light .stat-pill{background:var(--bg3);border-color:var(--border)}
+
+html{min-height:100%;background:#0f172a;transition:background .3s}
+body{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 60%,#0f172a 100%);background-attachment:fixed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);display:flex;justify-content:center;align-items:flex-start;padding:0;transition:background .3s,color .3s}
+@media(min-width:520px){body{padding:24px 16px;align-items:flex-start}}
+@media(min-width:720px){body{padding:36px 24px;align-items:center}}
+/* Mobile: full screen, no radius */
+#app{width:100%;max-width:100%;background:var(--bg1);border-radius:0;overflow:hidden;box-shadow:none;position:relative;min-height:100vh}
+/* Tablet: card style */
+@media(min-width:520px){#app{max-width:480px;border-radius:28px;min-height:auto;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 32px 80px rgba(0,0,0,.7),0 8px 24px rgba(99,102,241,.15)}}
+/* Large tablet / desktop: wider card */
+@media(min-width:720px){#app{max-width:580px;border-radius:36px}}
+/* Laptop dashboard takeover lives in the big @media(min-width:1024px) block near the end of this stylesheet */
+.screen{display:none}
+.screen.active{display:flex;flex-direction:column}
+.trips-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid rgba(55,65,81,.4)}
+.app-title{font-size:26px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#fff 30%,#93c5fd 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.app-tagline{font-size:11px;color:var(--dim);margin-top:2px}
+.trips-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.icon-btn{background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:16px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.icon-btn:hover{background:var(--bg4);color:var(--text)}
+.trips-list-wrap{padding:8px 12px 20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100vh - 90px)}
+.cats-screen-wrap{padding:14px 14px 24px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100vh - 100px)}
+@media(min-width:520px){.trips-list-wrap{max-height:600px}.cats-screen-wrap{max-height:600px}}
+@media(min-width:720px){.trips-list-wrap{max-height:640px}.cats-screen-wrap{max-height:640px}}
+.trip-card{background:var(--bg3);border-radius:16px;border:1px solid rgba(55,65,81,.6);padding:12px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.trip-card:hover{border-color:rgba(99,102,241,.4);background:var(--bg2);transform:translateY(-1px)}
+.trip-card.selected{border-color:var(--indigo);background:rgba(99,102,241,.1)}
+.trip-card.select-mode{cursor:default}
+.trip-card.select-mode:hover{transform:none;background:var(--bg3)}
+.trip-card.select-mode.selected:hover{background:rgba(99,102,241,.1)}
+.trip-card-left{flex:1;min-width:0;overflow:hidden}
+.trip-name{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trip-meta{font-size:11px;color:var(--dim);margin-top:3px}
+.trip-amount{font-size:17px;font-weight:800;color:var(--lime);margin-top:6px}
+.trip-card-btns{display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:1px}
+.trip-del{background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:4px;border-radius:6px;transition:color .15s}
+.trip-del:hover{color:var(--red)}
+/* multi-select */
+.trip-cb-wrap{display:flex;align-items:flex-start;padding-top:2px;flex-shrink:0;margin-right:4px}
+.trip-cb-circle{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;background:var(--bg4);transition:all .15s;flex-shrink:0}
+.trip-cb-circle.checked{background:var(--indigo);border-color:var(--indigo);color:#fff}
+#trip-select-bar{display:none;position:sticky;bottom:0;background:var(--bg1);border-top:1px solid var(--border);padding:11px 14px;gap:8px;align-items:center;margin:0 -14px -24px;z-index:10}
+#trip-select-bar.visible{display:flex}
+.sel-bar-count{flex:1;font-size:13px;font-weight:700;color:var(--muted)}
+.sel-bar-cancel{background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px;font-weight:700;padding:8px 13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.sel-bar-cancel:hover{background:var(--bg4);color:var(--text)}
+.sel-bar-del{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:var(--red);font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;font-family:inherit;transition:all .15s}
+.sel-bar-del:hover{background:rgba(239,68,68,.25)}
+.sel-bar-del:disabled{opacity:.35;pointer-events:none}
+.new-trip-btn{width:100%;border:2px dashed rgba(75,85,99,.8);background:transparent;border-radius:14px;color:var(--dim);font-size:14px;font-weight:700;padding:14px 0;cursor:pointer;transition:all .2s;font-family:inherit}
+.new-trip-btn:hover{border-color:var(--indigo);color:#a5b4fc;background:rgba(99,102,241,.05)}
+.header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 12px;position:sticky;top:0;background:var(--bg1);z-index:20;border-bottom:1px solid rgba(55,65,81,.4);gap:8px}
+.header-left{flex:1;min-width:0}
+.header-title{font-size:18px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(135deg,#fff 30%,#93c5fd 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+html.light .header-title{background:linear-gradient(135deg,#1e1b4b 0%,#4f46e5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.header-sub{font-size:11px;color:var(--dim);margin-top:2px;min-height:15px}
+.header-right{display:flex;gap:4px;align-items:center;flex-shrink:0}
+@media(min-width:380px){.header-right{gap:5px}}
+@media(min-width:520px){.header-right{gap:7px}}
+.currency-btn{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:6px 10px;color:var(--text);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.currency-btn:hover{background:var(--bg4);border-color:var(--indigo)}
+.currency-btn .chevron{font-size:8px;opacity:.5;margin-left:1px}
+#currency-dropdown{margin:0 14px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:none;box-shadow:0 12px 32px rgba(0,0,0,.5);animation:dropIn .15s ease}
+#currency-dropdown.open{display:block}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.currency-option{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-bottom:1px solid rgba(55,65,81,.5);padding:10px 14px;cursor:pointer;color:var(--text);font-size:12px;font-weight:600;text-align:left;font-family:inherit;transition:background .1s}
+.currency-option:last-child{border-bottom:none}
+.currency-option:hover{background:rgba(99,102,241,.1)}
+.currency-option.active{background:rgba(99,102,241,.18)}
+.currency-option .c-info{flex:1}
+.currency-option .c-code{color:var(--text)}
+.currency-option .c-name{color:var(--muted);font-weight:400}
+.currency-option .c-sym{color:var(--lblue);font-weight:800;font-size:14px}
+/* BUDGET BAR */
+.budget-bar-wrap{margin:0 14px 10px;background:var(--bg3);border-radius:14px;border:1px solid rgba(55,65,81,.5);padding:10px 14px}
+.budget-bar-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.budget-bar-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.budget-bar-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px}
+.budget-bar-track{height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-bottom:5px}
+.budget-bar-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.budget-bar-nums{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
+/* TAB BAR */
+.tab-bar{display:flex;margin:0 14px 12px;background:var(--bg3);border-radius:14px;padding:3px;gap:2px;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.tab-btn{flex:1;border:none;background:transparent;color:var(--dim);padding:8px 1px;border-radius:11px;font-size:9px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:380px){.tab-btn{font-size:10px;padding:8px 2px}}
+@media(min-width:520px){.tab-btn{font-size:11px;padding:9px 4px}}
+.tab-btn.active{background:linear-gradient(135deg,#374151,#4b5563);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}
+.content{padding:0 14px 28px;overflow-y:auto;max-height:calc(100vh - 195px)}
+@media(min-width:520px){.content{max-height:calc(100vh - 180px)}}
+@media(min-width:720px){.content{max-height:560px}}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+.tab-panel{display:none;flex-direction:column;gap:8px}
+.tab-panel.active{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.section-hint{color:var(--dim);font-size:11px;font-weight:500;margin-bottom:2px;padding-left:2px}
+.av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0;text-transform:uppercase}
+.av-md{width:28px;height:28px;font-size:12px}
+.av-sm{width:22px;height:22px;font-size:10px}
+.av-xs{width:18px;height:18px;font-size:9px}
+input,select{background:var(--bg4);border:1px solid transparent;border-radius:10px;padding:8px 10px;color:var(--text);font-size:13px;font-weight:600;outline:none;font-family:inherit;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{border-color:rgba(99,102,241,.5);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+select{cursor:pointer}
+.person-row{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:14px;padding:9px 10px;border:1px solid rgba(55,65,81,.6);transition:border-color .15s}
+.person-row:hover{border-color:rgba(99,102,241,.3)}
+.name-input{flex:1;min-width:0}
+.remove-btn{background:rgba(55,65,81,.7);border:none;color:var(--muted);width:28px;height:28px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-family:inherit;line-height:1}
+.remove-btn:hover{background:rgba(239,68,68,.2);color:var(--red)}
+.add-btn{width:100%;border:2px dashed rgba(75,85,99,.8);background:transparent;border-radius:14px;color:var(--dim);font-size:13px;font-weight:700;padding:12px 0;cursor:pointer;transition:all .2s;font-family:inherit}
+.cat-emoji-btn{width:48px;height:38px;flex-shrink:0;text-align:center;font-size:19px;background:var(--bg4);border:1px solid transparent;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;font-family:inherit}
+.cat-emoji-btn:hover{border-color:rgba(99,102,241,.5)}
+.modal.emoji-modal .modal-body{max-height:64vh;overflow-y:auto}
+.emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:7px}
+.emoji-pick-btn{background:var(--bg3);border:1px solid rgba(55,65,81,.6);border-radius:10px;font-size:20px;padding:9px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
+.emoji-pick-btn:hover{border-color:rgba(99,102,241,.6);background:rgba(99,102,241,.12)}
+.emoji-pick-btn.active{border-color:var(--indigo);background:rgba(99,102,241,.2)}
+.cat-usage-badge{font-size:10px;font-weight:700;color:var(--dim);flex-shrink:0;white-space:nowrap}
+.add-btn:hover{border-color:var(--indigo);color:#a5b4fc;background:rgba(99,102,241,.05)}
+.next-btn{width:100%;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:14px;color:#fff;font-size:14px;font-weight:800;padding:14px 0;cursor:pointer;margin-top:4px;font-family:inherit}
+.next-btn:hover{filter:brightness(1.1)}
+.pay-card{display:flex;background:var(--bg3);border-radius:16px;overflow:hidden;border:1px solid rgba(55,65,81,.6);margin-bottom:10px}
+.pay-accent{width:4px;flex-shrink:0}
+.pay-main{flex:1;min-width:0;display:flex;flex-direction:column}
+/* ── ACCORDION: collapsed summary row (always visible) ── */
+.pay-summary{display:flex;align-items:center;gap:9px;width:100%;box-sizing:border-box;padding:12px 12px;cursor:pointer;border-radius:16px 16px 0 0;transition:background .12s;-webkit-tap-highlight-color:transparent}
+.pay-summary:hover{background:rgba(255,255,255,.03)}
+.pay-summary:focus-visible{outline:2px solid var(--indigo);outline-offset:-2px}
+html.light .pay-summary:hover{background:rgba(0,0,0,.03)}
+.pay-chevron{font-size:10px;color:var(--dim);flex-shrink:0;width:12px;text-align:center;transition:transform .2s ease}
+.pay-card.open .pay-chevron{transform:rotate(90deg)}
+.pay-summary-mid{flex:1;min-width:0;text-align:left;overflow:hidden}
+.pay-summary-label{display:flex;align-items:center;gap:5px;min-width:0}
+.pay-summary-label-text{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pay-summary-cat{flex-shrink:0;font-size:12px}
+.pay-summary-sub{font-size:11px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pay-summary-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.pay-summary-amt{font-size:14px;font-weight:800;color:var(--lime);white-space:nowrap}
+.pay-summary-del{background:transparent;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:2px 5px;border-radius:6px;line-height:1;flex-shrink:0;font-family:inherit}
+.pay-summary-del:hover{background:rgba(239,68,68,.15);color:var(--red)}
+/* ── SEARCH / FILTER BAR ── */
+.pay-filter-bar{margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.pay-search-row{display:flex;gap:8px}
+.pay-search-input{flex:1;min-width:0;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit}
+.pay-search-input::placeholder{color:var(--dim)}
+.pay-filter-toggle{flex-shrink:0;width:38px;height:38px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:15px;cursor:pointer;color:var(--text);font-family:inherit}
+.pay-filter-toggle.active{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.4)}
+.pay-filter-panel{display:none;gap:8px;flex-wrap:wrap}
+.pay-filter-panel.open{display:flex}
+.pay-filter-panel select{flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--text);font-family:inherit}
+.pay-filter-status{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:6px;min-height:14px}
+.pay-filter-status .link-btn{background:none;border:none;color:var(--indigo);font-weight:700;font-size:11px;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline}
+/* ── DUPLICATE / DELETE ROW ── */
+.pay-action-row{display:flex;gap:8px}
+.pay-dup-btn{flex:1;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:#818cf8;font-size:11px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;font-family:inherit}
+.pay-dup-btn:hover{background:rgba(99,102,241,.2)}
+html.light .pay-dup-btn{background:rgba(55,48,163,.08);border-color:rgba(55,48,163,.25);color:var(--indigo)}
+.pay-del-btn{flex:1;background:transparent;border:1px solid rgba(239,68,68,.3);color:var(--red);font-size:11px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;font-family:inherit}
+.pay-del-btn:hover{background:rgba(239,68,68,.1)}
+/* ── ACCORDION: expandable body (hidden unless .pay-card.open) ── */
+.pay-body{display:none;padding:0 12px 12px;flex-direction:column;gap:8px;min-width:0}
+.pay-card.open .pay-body{display:flex}
+.pay-top-row{display:flex;align-items:center;gap:8px}
+.label-input{flex:1;min-width:0}
+.pay-amt-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.amt-wrap{display:flex;align-items:baseline;gap:2px;background:var(--bg0);border-radius:10px;padding:6px 12px;border:1px solid var(--border)}
+.amt-wrap:focus-within{border-color:rgba(99,102,241,.5);box-shadow:0 0 0 2px rgba(99,102,241,.12)}
+.amt-sym{color:var(--lblue);font-size:14px;font-weight:300}
+.amt-input{background:transparent;border:none!important;outline:none!important;box-shadow:none!important;color:var(--text);font-size:20px;font-weight:700;width:90px;font-family:inherit;padding:0}
+.method-pills{display:flex;gap:5px;flex:1;min-width:120px}
+.method-pill{flex:1;border:1px solid var(--border);background:var(--bg4);border-radius:8px;color:var(--muted);font-size:10px;font-weight:600;padding:6px 2px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s}
+.method-pill.active-cash{border-color:#22c55e;color:#22c55e;background:rgba(34,197,94,.08)}
+.method-pill.active-card{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.08)}
+.field-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pay-fields-grid{display:flex;flex-direction:column;gap:8px}
+.field-label{color:var(--dim);font-size:11px;font-weight:700;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px}
+.field-row select{flex:1;font-size:12px;background:rgba(55,65,81,.5)}
+.split-toggle{display:flex;background:var(--bg0);border-radius:10px;padding:2px;gap:1px;flex:1;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.split-toggle-btn{flex:1;border:none;background:transparent;color:var(--dim);font-size:8px;font-weight:700;padding:5px 1px;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s}
+@media(min-width:380px){.split-toggle-btn{font-size:9px;padding:5px 2px}}
+.split-toggle-btn.active{background:var(--bg4);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.split-box{background:var(--bg0);border-radius:12px;padding:9px 11px;display:flex;flex-direction:column;gap:7px;border:1px solid rgba(30,35,50,.8)}
+.split-box-label{color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.person-chips{display:flex;flex-wrap:wrap;gap:5px}
+.person-chip{border:1px solid var(--border);background:var(--bg3);border-radius:20px;color:var(--muted);font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.person-chip.selected{color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.share-preview{font-size:11px;font-weight:700;color:var(--lime)}
+.share-warn{font-size:11px;font-weight:700;color:var(--amber)}
+.share-over{font-size:11px;font-weight:700;color:var(--red)}
+.share-ok{font-size:11px;font-weight:700;color:var(--green)}
+.manual-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.manual-person{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#d1d5db;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.manual-input-wrap{display:flex;align-items:baseline;gap:2px;background:var(--bg3);border-radius:8px;padding:4px 9px;border:1px solid var(--border);flex-shrink:0;transition:border-color .15s}
+.manual-input-wrap:focus-within{border-color:rgba(99,102,241,.5);box-shadow:0 0 0 2px rgba(99,102,241,.12)}
+.manual-input-sym{color:var(--dim);font-size:11px;font-weight:600}
+.manual-input{background:transparent;border:none!important;outline:none!important;box-shadow:none!important;color:var(--text);font-size:13px;font-weight:800;width:65px;text-align:right;font-family:inherit;padding:0}
+/* PERCENT SPLIT */
+.pct-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pct-person{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#d1d5db;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pct-input-wrap{display:flex;align-items:baseline;gap:1px;background:var(--bg3);border-radius:8px;padding:4px 9px;border:1px solid var(--border);flex-shrink:0}
+.pct-input-wrap:focus-within{border-color:rgba(99,102,241,.5)}
+.pct-input{background:transparent;border:none!important;outline:none!important;box-shadow:none!important;color:var(--text);font-size:13px;font-weight:800;width:42px;text-align:right;font-family:inherit;padding:0}
+.pct-sym{color:var(--dim);font-size:11px;font-weight:600}
+.pct-amt{font-size:10px;color:var(--dim);min-width:50px;text-align:right}
+/* CATEGORIES */
+.cat-row{display:flex;flex-direction:column;gap:6px}
+.cat-scroll{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-pill{border:1px solid rgba(55,65,81,.7);background:var(--bg3);border-radius:20px;color:var(--muted);font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
+.cat-pill:hover{border-color:var(--indigo);color:#a5b4fc}
+.cat-pill.active{border-color:var(--indigo);color:#a5b4fc;background:rgba(99,102,241,.15)}
+.cat-custom-btn{border:1px dashed rgba(75,85,99,.8);background:transparent;border-radius:20px;color:var(--dim);font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
+.cat-custom-btn:hover{border-color:var(--indigo);color:#a5b4fc}
+/* RECEIPT */
+.receipt-row{display:flex;align-items:center;gap:8px}
+.receipt-attach-btn{border:1px dashed rgba(75,85,99,.8);background:transparent;border-radius:10px;color:var(--dim);font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s}
+.receipt-attach-btn:hover{border-color:var(--indigo);color:#a5b4fc}
+.receipt-thumb-wrap{position:relative;flex-shrink:0}
+.receipt-thumb{width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+.receipt-remove{position:absolute;top:-6px;right:-6px;background:var(--red);border:none;border-radius:50%;color:#fff;font-size:12px;width:18px;height:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+/* EMPTY */
+.empty-state{text-align:center;padding:44px 0 28px;color:var(--dim);font-size:13px;font-weight:500;grid-column:1/-1;width:100%}
+.empty-state .emoji{font-size:40px;display:block;margin-bottom:10px}
+/* SUMMARY */
+.summary-wrap{display:flex;flex-direction:column;gap:10px}
+.total-card{background:linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%);border-radius:18px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(99,102,241,.3);box-shadow:0 4px 20px rgba(30,27,75,.5)}
+.total-label{color:var(--cyan);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.total-amount{color:#fff;font-size:30px;font-weight:900;letter-spacing:-1px;margin-top:2px}
+.total-meta{color:var(--cyan);font-size:11px;text-align:right;line-height:1.6;opacity:.8}
+.summary-section{background:var(--bg3);border-radius:16px;overflow:hidden;border:1px solid rgba(55,65,81,.7)}
+.section-header{padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg2);text-transform:uppercase}
+.summary-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(31,41,55,.8);gap:8px;transition:background .1s}
+.summary-row:last-child{border-bottom:none}
+.summary-row:hover{background:rgba(99,102,241,.05)}
+.s-name{color:#e5e7eb;font-size:13px;font-weight:700}
+.s-sub{color:var(--dim);font-size:10px;margin-top:2px;line-height:1.4}
+.s-amt{color:var(--lime);font-size:14px;font-weight:800;flex-shrink:0}
+.net-pos{font-size:13px;font-weight:800;color:var(--green)}
+.net-neg{font-size:13px;font-weight:800;color:var(--red)}
+.net-zero{font-size:13px;font-weight:800;color:var(--muted)}
+.net-lbl{font-size:10px;color:var(--dim);margin-top:1px}
+.settle-row{display:flex;align-items:center;padding:10px 14px;gap:6px;border-bottom:1px solid rgba(31,41,55,.8)}
+.settle-row:last-child{border-bottom:none}
+.settle-from{color:var(--red);font-size:12px;font-weight:700;min-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.settle-to{color:var(--green);font-size:12px;font-weight:700;min-width:60px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.settle-mid{display:flex;align-items:center;gap:4px;flex:1;justify-content:center}
+.settle-arrow{color:var(--bg4);font-size:13px}
+.settle-badge{background:linear-gradient(135deg,#172554,#1e3a8a);border-radius:8px;padding:3px 9px;color:var(--cyan);font-size:11px;font-weight:800;border:1px solid rgba(99,102,241,.25)}
+.settled-msg{padding:14px;color:var(--green);font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+/* Settlement tracking */
+.settle-track-wrap{padding:0 14px 12px;display:flex;flex-direction:column;gap:5px}
+.settle-progress-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.settle-progress-fill{height:100%;border-radius:2px;background:var(--green);transition:width .3s}
+.settle-actions{display:flex;gap:6px;flex-wrap:wrap}
+.settle-record-btn{border:1px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);border-radius:8px;color:#a5b4fc;font-size:10px;font-weight:700;padding:5px 10px;cursor:pointer;font-family:inherit;transition:all .15s}
+.settle-record-btn:hover{background:rgba(99,102,241,.18);border-color:var(--indigo)}
+.settle-done-badge{background:rgba(34,197,94,.1);border-radius:8px;padding:4px 10px;color:var(--green);font-size:10px;font-weight:700;border:1px solid rgba(34,197,94,.2)}
+.partial-pills{display:flex;flex-wrap:wrap;gap:4px}
+.partial-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);color:var(--lblue)}
+/* CHARTS */
+.chart-card{background:var(--bg3);border-radius:16px;border:1px solid rgba(55,65,81,.6);padding:14px 16px;margin-bottom:12px}
+.chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px}
+canvas.chart-canvas{width:100%;display:block;border-radius:8px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chart-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-weight:600}
+.chart-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.stat-pills{display:flex;gap:8px;margin-bottom:10px}
+.stat-pill{flex:1;background:var(--bg3);border:1px solid rgba(55,65,81,.5);border-radius:12px;padding:10px 8px;text-align:center}
+.stat-pill-val{font-size:15px;font-weight:900;color:var(--text)}
+.stat-pill-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex;animation:fadeIn .15s ease}
+.modal{background:var(--bg2);border-radius:20px;border:1px solid var(--border);width:100%;max-width:360px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.modal-header{padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:16px;font-weight:800;color:var(--text)}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:2px}
+.modal-body{padding:16px 18px}
+.modal-footer{padding:12px 18px 16px;display:flex;gap:8px}
+.modal-input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-weight:600;outline:none;font-family:inherit;margin-bottom:10px}
+.modal-input:focus{border-color:rgba(99,102,241,.5);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.btn-primary{flex:1;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;padding:11px 0;cursor:pointer;font-family:inherit}
+.btn-secondary{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px;font-weight:700;padding:11px 0;cursor:pointer;font-family:inherit}
+.btn-danger{flex:1;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:var(--red);font-size:13px;font-weight:700;padding:11px 0;cursor:pointer;font-family:inherit}
+.modal-date-row{display:flex;gap:8px;margin-bottom:10px}
+.modal-date-col{flex:1;display:flex;flex-direction:column;gap:4px}
+.modal-date-lbl{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;padding-left:2px}
+input[type=date]{color-scheme:dark}
+html.light input[type=date]{color-scheme:light}
+.settle-modal-info{background:var(--bg3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--muted);line-height:1.6}
+.settle-modal-info strong{color:var(--text)}
+/* GUIDE MODAL */
+.modal.guide-modal{max-width:480px;max-height:84vh;display:flex;flex-direction:column}
+.modal.guide-modal .modal-header,.modal.guide-modal .modal-footer{flex-shrink:0}
+.modal.guide-modal .modal-body{flex:1;min-height:0;overflow-y:auto;padding:6px 18px 10px}
+.guide-sec{margin-bottom:16px}
+.guide-sec:last-child{margin-bottom:2px}
+.guide-sec h3{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.guide-sec p{font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:6px}
+.guide-sec ul{margin:0 0 4px 0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.guide-sec li{font-size:12px;color:var(--muted);line-height:1.55}
+.guide-sec li strong{color:var(--text)}
+.guide-tip{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:9px 12px;font-size:11px;color:#a5b4fc;line-height:1.55}
+html.light .guide-tip{background:rgba(55,48,163,.08);border-color:rgba(55,48,163,.25);color:var(--indigo)}
+/* DATA MANAGER SHEET */
+.fmt-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:198;opacity:0;pointer-events:none;transition:opacity .28s}
+.fmt-backdrop.open{opacity:1;pointer-events:auto}
+.dm-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg1);border-radius:22px 22px 0 0;z-index:199;transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 40px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.dm-sheet.open{transform:translateY(0)}
+html.light .dm-sheet{box-shadow:0 -4px 32px rgba(0,0,0,.12)}
+.dm-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;cursor:pointer;flex-shrink:0}
+.dm-nav{display:flex;align-items:center;gap:8px;padding:14px 18px 0}
+.dm-back{background:transparent;border:none;color:var(--indigo);font-size:17px;font-weight:700;cursor:pointer;padding:0 4px 0 0;font-family:inherit;line-height:1;flex-shrink:0}
+.dm-title{font-size:17px;font-weight:800;color:var(--text);padding:14px 18px 4px}
+.dm-nav .dm-title{padding:0}
+.dm-sub{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);padding:14px 18px 4px}
+/* Action rows (home page) */
+.dm-action-btn{display:flex;align-items:center;gap:14px;width:calc(100% - 36px);margin:5px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:14px 16px;cursor:pointer;text-align:left;font-family:inherit;transition:all .15s}
+.dm-action-btn:hover{background:var(--bg4);border-color:var(--indigo);transform:translateY(-1px)}
+.dm-a-icon{font-size:24px;flex-shrink:0;width:32px;text-align:center}
+.dm-a-info{flex:1}
+.dm-a-label{font-size:15px;font-weight:700;color:var(--text)}
+.dm-a-desc{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.dm-a-chev{font-size:18px;color:var(--dim)}
+/* Scope pills */
+.dm-scope-row{display:flex;gap:7px;padding:6px 18px 2px}
+.dm-pill{flex:1;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
+.dm-pill.active{background:rgba(99,102,241,.15);border-color:var(--indigo);color:var(--indigo)}
+/* Trip checklist */
+.dm-trip-list{margin:8px 18px 0;border:1px solid var(--border);border-radius:13px;background:var(--bg3);overflow:hidden;max-height:168px;overflow-y:auto}
+.dm-trip-row{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .12s}
+.dm-trip-row:not(:last-child){border-bottom:1px solid var(--border)}
+.dm-trip-row:hover{background:var(--bg4)}
+.dm-trip-cb{width:17px;height:17px;accent-color:var(--indigo);flex-shrink:0;cursor:pointer}
+.dm-trip-name{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.dm-trip-meta{font-size:11px;color:var(--dim);flex-shrink:0}
+/* Import buttons */
+.dm-imp-btn{display:flex;align-items:center;gap:12px;width:calc(100% - 36px);margin:5px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:12px 14px;cursor:pointer;text-align:left;font-family:inherit;transition:all .15s}
+.dm-imp-btn:hover{background:var(--bg4);border-color:var(--indigo)}
+.dm-imp-btn.dashed{border-style:dashed}
+.dm-imp-icon{font-size:20px;flex-shrink:0;width:26px;text-align:center}
+.dm-imp-label{font-size:13px;font-weight:700;color:var(--text)}
+.dm-imp-desc{font-size:11px;color:var(--muted);margin-top:1px}
+/* Format grid */
+.dm-fmt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 18px 18px}
+.dm-fmt-cell{background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:13px 6px 10px;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.dm-fmt-cell:hover{background:var(--bg4);border-color:var(--indigo);transform:translateY(-1px)}
+.dm-fmt-cell.disabled{opacity:.3;pointer-events:none}
+.dm-fmt-icon{font-size:22px}
+.dm-fmt-label{font-size:12px;font-weight:700;color:var(--text)}
+.dm-fmt-note{font-size:9px;color:var(--dim);line-height:1.3}
+.dm-divider{height:1px;background:var(--border);margin:8px 18px}
+.dm-warn{font-size:11px;color:#f87171;padding:4px 18px}
+.dm-spacer{height:8px}
+.io-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.io-btn{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:11px;font-weight:700;padding:8px 4px;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.io-btn:hover{background:var(--bg4);color:var(--text)}
+.io-btn.download{border-color:rgba(99,102,241,.35);color:#a5b4fc}
+.io-btn.download:hover{background:rgba(99,102,241,.15);border-color:var(--indigo);color:#fff}
+.theme-toggle-btn{background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:16px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0}
+.theme-toggle-btn:hover{background:var(--bg4);transform:rotate(20deg)}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg4);color:var(--text);font-size:12px;font-weight:600;padding:8px 16px;border-radius:20px;opacity:0;transition:all .3s;pointer-events:none;z-index:200;white-space:nowrap;display:flex;align-items:center;gap:10px}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.with-action{pointer-events:auto}
+#toast-action{background:none;border:none;color:#a5b4fc;font-weight:800;font-size:12px;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline;flex-shrink:0}
+html.light #toast-action{color:var(--indigo)}
+.date-header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 4px;margin-top:4px}
+.date-header-label{font-size:11px;font-weight:700;color:var(--indigo);letter-spacing:.3px}
+.date-header-total{font-size:11px;font-weight:800;color:var(--lime);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:8px}
+html.light .date-header-total{background:rgba(99,102,241,.12);color:var(--indigo)}
+.trip-dates{font-size:10px;font-weight:700;color:var(--indigo);background:rgba(99,102,241,.12);border-radius:6px;padding:2px 7px;display:inline-block;margin-top:4px;white-space:nowrap}
+html.light .trip-dates{background:rgba(99,102,241,.1)}
+#install-banner{display:none;margin:0 0 10px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(124,58,237,.12));border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:12px 14px;gap:10px;align-items:flex-start}
+#trips-list{display:flex;flex-direction:column;gap:10px}
+#install-banner.visible{display:flex}
+.install-banner-text{flex:1;font-size:12px;color:var(--muted);line-height:1.5}
+.install-banner-text strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+.install-banner-btn{background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0}
+.install-banner-close{background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;padding:0 2px;flex-shrink:0}
+#receipt-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:none;align-items:center;justify-content:center}
+#receipt-lightbox.open{display:flex}
+#receipt-lightbox img{max-width:90vw;max-height:80vh;border-radius:12px}
+#receipt-lightbox-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:24px;cursor:pointer;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+
+/* ============================================================
+   LAPTOP / DESKTOP DASHBOARD (1024px and up)
+   Sidebar navigation + wide content area instead of the
+   centered phone-card look. Mobile/tablet rules above are
+   untouched.
+   ============================================================ */
+@media(min-width:1024px){
+  body{padding:32px;align-items:center;justify-content:center}
+  #app{width:100%;max-width:1280px;height:calc(100vh - 64px);min-height:600px;border-radius:24px;display:flex;flex-direction:column;overflow:hidden}
+  .screen.active{flex:1;min-height:0;overflow:hidden}
+
+  /* ---- Trips screen: fixed header, scrollable card grid ---- */
+  .trips-header{flex-shrink:0;padding:22px 28px 16px}
+  .trips-list-wrap{flex:1;min-height:0;overflow-y:auto;max-height:none;padding:18px 28px 32px;display:block}
+  .cats-screen-wrap{flex:1;min-height:0;overflow-y:auto;max-height:none;padding:18px 28px 32px;display:block}
+  #install-banner{margin:0 0 14px}
+  #trips-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-content:start;margin-bottom:14px}
+  .trip-card{margin:0}
+
+  /* ---- Trip detail: sidebar + main content grid ---- */
+  #screen-detail.active{display:grid;grid-template-columns:300px 1fr;grid-template-rows:auto auto auto 1fr}
+  #screen-detail .header{grid-column:1;grid-row:1;position:static;background:var(--bg2);flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:14px;padding:26px 22px 18px}
+  #screen-detail .header-left,#screen-detail .header-right{width:100%}
+  #screen-detail .header-title{font-size:19px}
+  #screen-detail .header-right{flex-wrap:wrap;gap:6px}
+  #screen-detail #currency-dropdown{grid-column:1;grid-row:2;margin:0 22px 14px}
+  #screen-detail #budget-bar-container{grid-column:1;grid-row:3;background:var(--bg2)}
+  #screen-detail #budget-bar-container .budget-bar-wrap{margin:0 22px 14px}
+  #screen-detail .tab-bar{grid-column:1;grid-row:4;background:var(--bg2);box-shadow:none;border-radius:0;flex-direction:column;align-items:stretch;margin:0;padding:12px 14px 24px;gap:6px}
+  #screen-detail .tab-btn{flex:none;width:100%;text-align:left;font-size:14px;padding:12px 16px;border-radius:10px}
+  #screen-detail .tab-btn.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.35)}
+  #screen-detail .content{grid-column:2;grid-row:1/5;overflow-y:auto;max-height:none;padding:30px 40px 44px;border-left:1px solid rgba(55,65,81,.4)}
+
+  /* ---- Payments: cards get room to breathe, fields pair up ---- */
+  .pay-card{border-radius:18px}
+  .pay-summary{padding:15px 22px}
+  .pay-body{padding:0 22px 16px;gap:12px}
+  .label-input{font-size:15px}
+  .amt-wrap{padding:8px 16px}
+  .amt-sym{font-size:18px}
+  .amt-input{font-size:26px;width:160px}
+  .method-pills{min-width:220px;gap:8px}
+  .method-pill{font-size:12px;padding:9px 8px;border-radius:10px}
+  .pay-fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field-row select{font-size:13px;padding:8px 10px}
+  .field-label{font-size:12px}
+  .split-toggle-btn{font-size:11px;padding:8px 4px}
+  .split-box{padding:14px 18px}
+  .person-chip{font-size:12px;padding:7px 15px}
+  .cat-scroll{flex-wrap:wrap;overflow-x:visible}
+  .cat-pill,.cat-custom-btn{font-size:11px;padding:6px 14px}
+  .io-bar{justify-content:flex-start}
+  .io-btn{flex:none;padding:9px 18px}
+
+  /* ---- People: a tidy grid instead of one long list ---- */
+  #people-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  #categories-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:14px}
+
+  /* ---- Summary: dashboard-style panes (transactions left, balances/settle right) ---- */
+  .summary-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+  .summary-wrap>.total-card{grid-column:1/-1}
+  .summary-wrap>.summary-section:nth-of-type(2){grid-column:1;grid-row:2/4}
+  .summary-wrap>.summary-section:nth-of-type(3){grid-column:2;grid-row:2}
+  .summary-wrap>.summary-section:nth-of-type(4){grid-column:2;grid-row:3}
+
+  /* ---- Charts: a real widget grid ---- */
+  #charts-content{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .stat-pills{grid-column:1/-1}
+  .chart-card{margin-bottom:0}
+  .chart-card:last-of-type{grid-column:1/-1}
+}
+@media(min-width:1440px){#app{max-width:1400px}}
+
+
+/* ── AUTH SCREEN ── */
+#auth-screen{display:none;position:fixed;inset:0;background:var(--bg1);z-index:9999;align-items:center;justify-content:center;padding:20px;}
+#auth-screen.visible{display:flex;}
+.auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.auth-logo{font-size:40px;text-align:center;margin-bottom:4px;}
+.auth-title{font-size:22px;font-weight:800;text-align:center;color:var(--text);margin-bottom:4px;}
+.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;}
+.auth-toggle{display:flex;background:var(--bg3);border-radius:12px;padding:3px;margin-bottom:20px;gap:3px;}
+.auth-toggle-btn{flex:1;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:600;padding:8px;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s;}
+.auth-toggle-btn.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.4);}
+.auth-field{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:15px;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:12px;transition:border-color .15s;}
+.auth-field:focus{border-color:var(--accent);}
+.auth-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;transition:opacity .15s;}
+.auth-btn:hover{opacity:.88;}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+.auth-err{color:#f87171;font-size:12px;text-align:center;min-height:18px;margin:6px 0;}
+.auth-link{text-align:center;margin-top:14px;}
+.auth-link button{background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline;}
+.auth-divider{text-align:center;color:var(--muted);font-size:11px;margin:4px 0 0;}
+#auth-loading{position:fixed;inset:0;background:var(--bg1);z-index:9998;display:flex;align-items:center;justify-content:center;font-size:32px;}
+</style>
+</head>
+<body>
+<!-- Loading splash -->
+<div id="auth-loading">💸</div>
+
+<!-- Auth screen -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">💸</div>
+    <div class="auth-title">SplitTab</div>
+    <div class="auth-sub">Sign in to sync your trips across all devices</div>
+    <div class="auth-toggle">
+      <button class="auth-toggle-btn active" id="auth-tab-login" onclick="setAuthMode('login')">Sign In</button>
+      <button class="auth-toggle-btn" id="auth-tab-signup" onclick="setAuthMode('signup')">Sign Up</button>
+    </div>
+    <input class="auth-field" type="email" id="auth-email" placeholder="Email address" autocomplete="email">
+    <input class="auth-field" type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+    <input class="auth-field" type="password" id="auth-password2" placeholder="Confirm password" autocomplete="new-password" style="display:none">
+    <div class="auth-err" id="auth-err"></div>
+    <button class="auth-btn" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
+    <div class="auth-link"><button onclick="forgotPassword()">Forgot password?</button></div>
+    <div class="auth-divider" id="auth-version">v1.0 · Cloud Sync</div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <!-- SCREEN: TRIP LIST -->
+  <div class="screen active" id="screen-trips">
+    <div class="trips-header">
+      <div><div class="app-title">SplitTab</div><div class="app-tagline">Your expense splits</div></div>
+      <div class="trips-actions">
+        <button class="theme-toggle-btn" title="Toggle theme" onclick="toggleTheme()">☀️</button>
+        <button class="icon-btn" id="trip-select-btn" title="Select trips" onclick="toggleSelectMode()">☑️</button>
+        <button class="icon-btn" title="Categories" onclick="openCategoriesScreen()">🏷️</button>
+        <button class="icon-btn" title="How to use" onclick="openGuide()">❓</button>
+        <button class="icon-btn" title="Data Manager" onclick="openDataManager()">📂</button>
+        <button class="icon-btn" title="Sign Out" onclick="signOut()">🚪</button>
+      </div>
+    </div>
+    <div class="trips-list-wrap">
+      <div id="install-banner">
+        <div style="font-size:24px;flex-shrink:0">📱</div>
+        <div class="install-banner-text"><strong>Install SplitTab on your phone</strong><span id="install-instructions"></span></div>
+        <button class="install-banner-btn" id="install-btn" style="display:none" onclick="triggerInstall()">Install</button>
+        <button class="install-banner-close" onclick="dismissInstallBanner()">×</button>
+      </div>
+      <div id="trips-list"></div>
+      <button class="new-trip-btn" onclick="openNewTripModal()">＋ New Trip</button>
+      <div id="trip-select-bar">
+        <span class="sel-bar-count" id="sel-bar-count">0 selected</span>
+        <button class="sel-bar-cancel" onclick="exitSelectMode()">Cancel</button>
+        <button class="sel-bar-del" id="sel-bar-del" onclick="confirmDeleteSelected()" disabled>🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: TRIP DETAIL -->
+  <div class="screen" id="screen-detail">
+    <div class="header">
+      <div class="header-left">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="header-title" id="detail-trip-name">Trip</div>
+          <button onclick="openEditDatesModal()" title="Edit trip" style="background:transparent;border:none;color:var(--dim);font-size:14px;cursor:pointer;padding:2px;border-radius:6px;line-height:1;flex-shrink:0">✏️</button>
+        </div>
+        <div class="header-sub" id="header-sub">Expense splitting</div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" title="Back" onclick="goToTripList()">←</button>
+        <button class="currency-btn" id="currency-btn" onclick="toggleCurrencyPicker()">
+          <span id="curr-flag" class="flag">🇮🇳</span>
+          <span id="curr-sym" style="font-size:13px">₹</span>
+          <span class="chevron">▼</span>
+        </button>
+        <button class="theme-toggle-btn" title="Toggle theme" onclick="toggleTheme()">☀️</button>
+        <button class="icon-btn" title="How to use" onclick="openGuide()">❓</button>
+        <button class="icon-btn" title="Data Manager" onclick="openDataManager()">📂</button>
+      </div>
+    </div>
+    <div id="currency-dropdown"></div>
+    <div id="budget-bar-container"></div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-people"   onclick="switchTab('people')">👥 People</button>
+      <button class="tab-btn"        id="tab-payments" onclick="switchTab('payments')">🧾 Pay</button>
+      <button class="tab-btn"        id="tab-summary"  onclick="switchTab('summary')">📊 Summary</button>
+      <button class="tab-btn"        id="tab-charts"   onclick="switchTab('charts')">📈 Charts</button>
+    </div>
+    <div class="content">
+      <div class="tab-panel active" id="panel-people">
+        <div class="section-hint">Add everyone sharing expenses</div>
+        <div id="people-list"></div>
+        <button class="add-btn" onclick="addPerson()">＋ Add Person</button>
+        <button class="next-btn" onclick="switchTab('payments')">Continue to Payments →</button>
+      </div>
+      <div class="tab-panel" id="panel-payments">
+        <div class="io-bar">
+          <button class="io-btn" onclick="openCategoriesScreen()">🏷️ Categories</button>
+          <button class="io-btn download" onclick="openDataManager()">📂 Data</button>
+        </div>
+        <div class="section-hint">Each expense can be split differently</div>
+        <div class="pay-filter-bar">
+          <div class="pay-search-row">
+            <input type="text" id="pay-search" class="pay-search-input" placeholder="🔍 Search payments..." oninput="onPaySearchInput(this.value)">
+            <button class="pay-filter-toggle" onclick="togglePayFilters()" title="Filters">⚙️</button>
+          </div>
+          <div class="pay-filter-panel" id="pay-filter-panel">
+            <select id="pay-filter-person" onchange="onPayFilterChange()"></select>
+            <select id="pay-filter-category" onchange="onPayFilterChange()"></select>
+          </div>
+          <div class="pay-filter-status" id="pay-filter-status"></div>
+        </div>
+        <div id="payments-list"></div>
+        <button class="add-btn" onclick="addPayment()">＋ Add Payment</button>
+        <button class="next-btn" id="view-summary-btn" onclick="switchTab('summary')" style="display:none">View Summary →</button>
+      </div>
+      <div class="tab-panel" id="panel-summary"><div id="summary-content"></div></div>
+      <div class="tab-panel" id="panel-charts"><div id="charts-content"></div></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: CATEGORIES (master list — global, shared by every trip) -->
+  <div class="screen" id="screen-categories">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-title">🏷️ Categories</div>
+        <div class="header-sub">Shared across every trip</div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" title="Back" onclick="closeCategoriesScreen()">←</button>
+      </div>
+    </div>
+    <div class="cats-screen-wrap">
+      <div class="section-hint" style="margin-bottom:8px">Rename, re-icon, delete, or add categories — changes apply everywhere</div>
+      <div id="categories-list"></div>
+      <button class="add-btn" onclick="addCategory()">＋ Add Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: New Trip -->
+<div class="modal-overlay" id="modal-new-trip">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">New Trip</div><button class="modal-close" onclick="closeModal('modal-new-trip')">×</button></div>
+    <div class="modal-body">
+      <input class="modal-input" id="new-trip-name" placeholder="Trip name (e.g. Goa 2025)" maxlength="60">
+      <input class="modal-input" id="new-trip-desc" placeholder="Description (optional)" maxlength="100">
+      <div class="modal-date-row">
+        <div class="modal-date-col"><div class="modal-date-lbl">📅 Start Date</div><input class="modal-input" type="date" id="new-trip-start" style="margin-bottom:0"></div>
+        <div class="modal-date-col"><div class="modal-date-lbl">🏁 End Date</div><input class="modal-input" type="date" id="new-trip-end" style="margin-bottom:0"></div>
+      </div>
+      <div style="margin-top:10px"><div class="modal-date-lbl" style="margin-bottom:4px">💰 Budget (optional)</div><input class="modal-input" type="number" id="new-trip-budget" placeholder="Total budget e.g. 50000" min="0" style="margin-bottom:0"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-new-trip')">Cancel</button><button class="btn-primary" onclick="createTrip()">Create Trip</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Trip -->
+<div class="modal-overlay" id="modal-edit-dates">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Edit Trip Info</div><button class="modal-close" onclick="closeModal('modal-edit-dates')">×</button></div>
+    <div class="modal-body">
+      <input class="modal-input" id="edit-trip-name" placeholder="Trip name" maxlength="60">
+      <input class="modal-input" id="edit-trip-desc" placeholder="Description (optional)" maxlength="100">
+      <div class="modal-date-row">
+        <div class="modal-date-col"><div class="modal-date-lbl">📅 Start Date</div><input class="modal-input" type="date" id="edit-trip-start" style="margin-bottom:0"></div>
+        <div class="modal-date-col"><div class="modal-date-lbl">🏁 End Date</div><input class="modal-input" type="date" id="edit-trip-end" style="margin-bottom:0"></div>
+      </div>
+      <div style="margin-top:10px"><div class="modal-date-lbl" style="margin-bottom:4px">💰 Budget (optional)</div><input class="modal-input" type="number" id="edit-trip-budget" placeholder="Total budget" min="0" style="margin-bottom:0"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-edit-dates')">Cancel</button><button class="btn-primary" onclick="saveTripEdits()">Save</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Confirm Delete -->
+<div class="modal-overlay" id="modal-confirm-delete">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Delete Trip?</div><button class="modal-close" onclick="closeModal('modal-confirm-delete')">×</button></div>
+    <div class="modal-body"><div style="color:var(--muted);font-size:13px">Permanently delete "<span id="delete-trip-name-label"></span>" and all its payments?</div></div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-confirm-delete')">Cancel</button><button class="btn-danger" onclick="confirmDeleteTrip()">Delete</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm-delete-payment">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Delete Payment?</div><button class="modal-close" onclick="closeModal('modal-confirm-delete-payment')">×</button></div>
+    <div class="modal-body"><div style="color:var(--muted);font-size:13px">Permanently delete "<span id="delete-payment-name-label"></span>"? This can't be undone.</div></div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-confirm-delete-payment')">Cancel</button><button class="btn-danger" onclick="confirmDeletePayment()">Delete</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Confirm Delete Selected Trips -->
+<div class="modal-overlay" id="modal-confirm-delete-selected">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Delete Trips?</div><button class="modal-close" onclick="closeModal('modal-confirm-delete-selected')">×</button></div>
+    <div class="modal-body"><div style="color:var(--muted);font-size:13px">Permanently delete <strong id="delete-selected-count-label" style="color:var(--text)"></strong> and all their payments? This cannot be undone.</div></div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-confirm-delete-selected')">Cancel</button><button class="btn-danger" onclick="doDeleteSelected()">Delete</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Custom Category (quick-add from within a payment) -->
+<div class="modal-overlay" id="modal-custom-cat">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Custom Category</div><button class="modal-close" onclick="closeModal('modal-custom-cat')">×</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px">
+        <button type="button" class="cat-emoji-btn" id="custom-cat-emoji-btn" onclick="openEmojiPicker('modal')" title="Choose an icon">🏷️</button>
+        <input type="hidden" id="custom-cat-emoji" value="🏷️">
+        <input class="modal-input" id="custom-cat-name" placeholder="Category name" maxlength="30" style="flex:1">
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-custom-cat')">Cancel</button><button class="btn-primary" onclick="saveCustomCategory()">Add</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Emoji / Icon Picker -->
+<div class="modal-overlay" id="modal-emoji-picker">
+  <div class="modal emoji-modal">
+    <div class="modal-header"><div class="modal-title">Choose an Icon</div><button class="modal-close" onclick="closeModal('modal-emoji-picker')">×</button></div>
+    <div class="modal-body">
+      <div class="emoji-grid" id="emoji-grid"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input class="modal-input" id="emoji-picker-custom" placeholder="Or type any emoji" maxlength="4" style="flex:1;margin-bottom:0;text-align:center;font-size:18px">
+        <button type="button" class="btn-primary" style="flex:none;padding:0 16px" onclick="applyCustomEmoji()">Use</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Record Settlement -->
+<div class="modal-overlay" id="modal-settle-record">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Record Payment</div><button class="modal-close" onclick="closeModal('modal-settle-record')">×</button></div>
+    <div class="modal-body">
+      <div class="settle-modal-info" id="settle-modal-info"></div>
+      <div class="modal-date-lbl" style="margin-bottom:4px">Payment Date</div>
+      <input class="modal-input" type="date" id="settle-payment-date" style="margin-bottom:10px">
+      <div class="modal-date-lbl" style="margin-bottom:4px">Amount paid</div>
+      <input class="modal-input" type="number" id="settle-partial-amt" placeholder="Amount" min="0">
+      <div class="modal-date-lbl" style="margin-bottom:4px">Note (optional)</div>
+      <input class="modal-input" id="settle-partial-note" placeholder="e.g. UPI, cash">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-settle-record')">Cancel</button>
+      <button class="btn-primary" onclick="recordPartialSettlement()">Partial</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,#059669,#047857)" onclick="recordFullSettlement()">Full ✅</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Guide -->
+<div class="modal-overlay" id="modal-guide">
+  <div class="modal guide-modal">
+    <div class="modal-header"><div class="modal-title">📘 How to Use SplitTab</div><button class="modal-close" onclick="closeModal('modal-guide')">×</button></div>
+    <div class="modal-body" id="guide-body"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-guide')">Close</button>
+      <button class="btn-primary" onclick="downloadGuideHTML()">⬇️ Download Guide</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORMAT PICKER -->
+<div class="fmt-backdrop" id="dm-backdrop" onclick="closeDataManager()"></div>
+<div class="dm-sheet" id="dm-sheet">
+  <div id="dm-content"></div>
+</div>
+
+<!-- Receipt lightbox -->
+<div id="receipt-lightbox" onclick="closeReceiptLightbox()">
+  <button id="receipt-lightbox-close" onclick="closeReceiptLightbox()">×</button>
+  <img id="receipt-lightbox-img" src="" alt="Receipt">
+</div>
+
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+<input type="file" id="import-csv-file" accept=".csv" style="display:none" onchange="handleImportCSV(event)">
+<input type="file" id="import-xlsx-file" accept=".xlsx,.xls" style="display:none" onchange="handleImportXLSX(event)">
+<input type="file" id="receipt-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleReceiptFile(event)">
+<div id="toast"><span id="toast-msg"></span><button id="toast-action" style="display:none"></button></div>
+<script>
+/* ── SUPABASE CONFIG ─────────────────────────────────────────────────
+   Replace these two values with your own project credentials.
+   Get them from: https://supabase.com → Project Settings → API
+   ──────────────────────────────────────────────────────────────────── */
+const SUPABASE_URL      = 'https://fsmlaibmhknqeusaekdt.supabase.co/rest/v1/';       // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbWxhaWJtaGtucWV1c2Fla2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDE3ODAsImV4cCI6MjA5Nzk3Nzc4MH0.Tay8lRKAwp56bqMjBho7DQN27vVrngNBp7Pp7Onu1mc';  // starts with "eyJ..."
+
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let _currentUser = null;
+
+/* ── HELPERS ── */
+const PALETTE=["#f97316","#8b5cf6","#ec4899","#14b8a6","#f59e0b","#6366f1","#10b981","#ef4444"];
+const ac=i=>PALETTE[i%PALETTE.length];
+const gid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+const fmtN=n=>{if(isNaN(parseFloat(n)))return'0.00';return(parseFloat(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $=id=>document.getElementById(id);
+
+/* ── CURRENCIES ── */
+const CURRENCIES=[
+  {code:"INR",symbol:"₹",flag:"🇮🇳",name:"Indian Rupee"},
+  {code:"USD",symbol:"$",flag:"🇺🇸",name:"US Dollar"},
+  {code:"EUR",symbol:"€",flag:"🇪🇺",name:"Euro"},
+  {code:"GBP",symbol:"£",flag:"🇬🇧",name:"British Pound"},
+  {code:"JPY",symbol:"¥",flag:"🇯🇵",name:"Japanese Yen"},
+  {code:"AED",symbol:"د.إ",flag:"🇦🇪",name:"UAE Dirham"},
+  {code:"SGD",symbol:"S$",flag:"🇸🇬",name:"Singapore Dollar"},
+  {code:"AUD",symbol:"A$",flag:"🇦🇺",name:"Australian Dollar"},
+  {code:"CAD",symbol:"CA$",flag:"🇨🇦",name:"Canadian Dollar"},
+  {code:"THB",symbol:"฿",flag:"🇹🇭",name:"Thai Baht"},
+  {code:"MYR",symbol:"RM",flag:"🇲🇾",name:"Malaysian Ringgit"},
+  {code:"IDR",symbol:"Rp",flag:"🇮🇩",name:"Indonesian Rupiah"},
+  {code:"KRW",symbol:"₩",flag:"🇰🇷",name:"Korean Won"},
+  {code:"CHF",symbol:"Fr",flag:"🇨🇭",name:"Swiss Franc"},
+  {code:"CNY",symbol:"¥",flag:"🇨🇳",name:"Chinese Yuan"},
+];
+
+/* ── CATEGORIES ──
+   Categories are GLOBAL, shared by every trip — there's one master list
+   (not stored per-trip). A category created or edited anywhere is
+   instantly available in every other trip. New installs are pre-seeded
+   with a master list of the most commonly used categories
+   (defaultCategorySeed); every one of them is a normal, fully
+   editable/deletable entry — there's no "locked default" concept. */
+const DEFAULT_CATEGORY_SEED=[
+  {emoji:'🍔',label:'Food & Drink'},
+  {emoji:'🚗',label:'Transport'},
+  {emoji:'🏨',label:'Hotel / Stay'},
+  {emoji:'🛍️',label:'Shopping'},
+  {emoji:'🎯',label:'Activities'},
+  {emoji:'🛒',label:'Groceries'},
+  {emoji:'⛽',label:'Fuel'},
+  {emoji:'💊',label:'Medical'},
+  {emoji:'🎬',label:'Entertainment'},
+  {emoji:'📦',label:'Other'},
+];
+function defaultCategorySeed(){return DEFAULT_CATEGORY_SEED.map(c=>({key:'cat_'+gid(),emoji:c.emoji,label:c.label}));}
+const CHART_COLORS=['#6366f1','#22c55e','#f59e0b','#ef4444','#0891b2','#db2777','#7c3aed','#059669','#d97706','#64748b'];
+function allCategories(){return categories;}
+function getCatByKey(key){return categories.find(c=>c.key===key)||{key:'other',label:'Other',emoji:'📦'};}
+
+/* ── STATE ── */
+let trips=[];          // populated async after auth
+let categories=[];     // populated async after auth
+let currentTrip=null;
+let currentTab='people';
+let deletePendingId=null;
+let _pendingReceiptPayId=null;
+let _pendingSettleFromId=null;
+let _pendingSettleToId=null;
+let _customCatPendingPayId=null;
+let _categoriesReturnScreen='trips';
+let expandedPayId=null;
+let paySearchQuery='';
+let payFilterPerson='';
+let payFilterCategory='';
+let _selectMode=false;
+let _selectedTripIds=new Set();
+
+/* ── MIGRATION ── */
+function migrateTrip(trip){
+  if(!trip.settlementRecords)trip.settlementRecords=[];
+  if(!trip.budget)trip.budget=0;
+  trip.payments=(trip.payments||[]).map(p=>{
+    if(!p.category)p.category='other';
+    if(!p.percentages)p.percentages={};
+    if(!p.receiptUri)p.receiptUri='';
+    if(!p.splitAmong&&p.splitWith)p.splitAmong=p.splitWith;
+    if(!p.splitWith&&p.splitAmong)p.splitWith=p.splitAmong;
+    if(!p.splitAmong)p.splitAmong=(trip.people||[]).map(pp=>pp.id);
+    if(!p.splitWith)p.splitWith=p.splitAmong;
+    if(p.splitType==='equal')p.splitType='equal-all';
+    return p;
+  });
+  return trip;
+}
+
+/* ── DATE HELPERS ── */
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function tripDateRange(trip){
+  const s=trip.startDate,e=trip.endDate;
+  if(!s)return new Date(trip.createdAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  const sd=new Date(s+'T00:00:00'),ed=e?new Date(e+'T00:00:00'):null;
+  if(!ed||s===e)return sd.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  if(sd.getFullYear()===ed.getFullYear())
+    return`${sd.toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${ed.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+  return`${sd.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} – ${ed.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+}
+function formatDateHeader(dateStr){
+  if(!dateStr)return'No date set';
+  const d=new Date(dateStr+'T00:00:00');
+  const today=todayStr();
+  const yest=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const label=d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  if(dateStr===today)return`Today · ${label}`;
+  if(dateStr===yest)return`Yesterday · ${label}`;
+  return label;
+}
+
+/* ── PERSISTENCE ── */
+/* ── PERSISTENCE (Supabase cloud) ── */
+async function _ensureRow(){
+  /* Creates the user_data row if it doesn't exist yet */
+  const{data}=await _sb.from('user_data').select('user_id').eq('user_id',_currentUser.id).single();
+  if(!data){await _sb.from('user_data').insert({user_id:_currentUser.id,trips:[],categories:[]});}
+}
+async function loadTrips(){
+  if(!_currentUser)return[];
+  const{data,error}=await _sb.from('user_data').select('trips').eq('user_id',_currentUser.id).single();
+  if(error||!data)return[];
+  return(data.trips||[]).map(migrateTrip);
+}
+async function loadCategories(){
+  if(!_currentUser)return defaultCategorySeed();
+  const{data,error}=await _sb.from('user_data').select('categories').eq('user_id',_currentUser.id).single();
+  if(error||!data||!(data.categories||[]).length)return defaultCategorySeed();
+  return data.categories;
+}
+function saveTrips(){
+  /* Fire-and-forget — no await needed so all existing callers work unchanged */
+  if(!_currentUser)return;
+  _sb.from('user_data').upsert({user_id:_currentUser.id,trips,updated_at:new Date().toISOString()},{onConflict:'user_id'}).catch(console.error);
+}
+function saveCategories(){
+  if(!_currentUser)return;
+  _sb.from('user_data').upsert({user_id:_currentUser.id,categories,updated_at:new Date().toISOString()},{onConflict:'user_id'}).catch(console.error);
+}
+function getCurrency(){if(!currentTrip)return CURRENCIES[0];return CURRENCIES.find(c=>c.code===currentTrip.currency)||CURRENCIES[0];}
+
+/* ── AUTH UI ── */
+let _authMode='login';
+function setAuthMode(mode){
+  _authMode=mode;
+  $('auth-tab-login').classList.toggle('active',mode==='login');
+  $('auth-tab-signup').classList.toggle('active',mode==='signup');
+  $('auth-password2').style.display=mode==='signup'?'block':'none';
+  $('auth-submit-btn').textContent=mode==='login'?'Sign In':'Create Account';
+  $('auth-err').textContent='';
+}
+async function submitAuth(){
+  const email=($('auth-email').value||'').trim();
+  const pw=$('auth-password').value||'';
+  const pw2=$('auth-password2').value||'';
+  $('auth-err').textContent='';
+  if(!email||!pw){$('auth-err').textContent='Email and password required.';return;}
+  if(_authMode==='signup'&&pw!==pw2){$('auth-err').textContent='Passwords do not match.';return;}
+  if(_authMode==='signup'&&pw.length<8){$('auth-err').textContent='Password must be at least 8 characters.';return;}
+  $('auth-submit-btn').disabled=true;
+  $('auth-submit-btn').textContent='Please wait…';
+  let error;
+  if(_authMode==='login'){
+    ({error}=await _sb.auth.signInWithPassword({email,password:pw}));
+  }else{
+    ({error}=await _sb.auth.signUp({email,password:pw}));
+    if(!error){$('auth-err').style.color='#4ade80';$('auth-err').textContent='Check your email to confirm your account!';$('auth-submit-btn').disabled=false;$('auth-submit-btn').textContent='Create Account';return;}
+  }
+  if(error){$('auth-err').style.color='#f87171';$('auth-err').textContent=error.message;}
+  $('auth-submit-btn').disabled=false;
+  $('auth-submit-btn').textContent=_authMode==='login'?'Sign In':'Create Account';
+}
+async function forgotPassword(){
+  const email=($('auth-email').value||'').trim();
+  if(!email){$('auth-err').style.color='#f87171';$('auth-err').textContent='Enter your email first.';return;}
+  const{error}=await _sb.auth.resetPasswordForEmail(email);
+  $('auth-err').style.color=error?'#f87171':'#4ade80';
+  $('auth-err').textContent=error?error.message:'Reset link sent! Check your email.';
+}
+async function signOut(){
+  await _sb.auth.signOut();
+  trips=[];categories=[];currentTrip=null;
+  showAuth();
+}
+function showAuth(){
+  $('auth-loading').style.display='none';
+  $('auth-screen').classList.add('visible');
+  $('app').style.display='none';
+}
+function showApp(){
+  $('auth-loading').style.display='none';
+  $('auth-screen').classList.remove('visible');
+  $('app').style.display='block';
+  renderTripList();
+}
+/* Attach Enter key to auth fields */
+['auth-email','auth-password','auth-password2'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
+});
+
+/* ── THEME ── */
+function initTheme(){const t=localStorage.getItem('splittab_theme');if(t==='light')document.documentElement.classList.add('light');updateThemeIcons();}
+function toggleTheme(){const l=document.documentElement.classList.toggle('light');localStorage.setItem('splittab_theme',l?'light':'dark');updateThemeIcons();if(currentTab==='charts')renderCharts();}
+function updateThemeIcons(){document.querySelectorAll('.theme-toggle-btn').forEach(b=>{b.textContent=document.documentElement.classList.contains('light')?'🌙':'☀️';});}
+
+/* ── TOAST ── */
+function toast(msg){
+  const t=$('toast');$('toast-msg').textContent=msg;
+  $('toast-action').style.display='none';t.classList.remove('with-action');
+  t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function actionToast(msg,actionLabel,onAction){
+  const t=$('toast');$('toast-msg').textContent=msg;
+  const btn=$('toast-action');btn.textContent=actionLabel;btn.style.display='inline';
+  btn.onclick=()=>{t.classList.remove('show','with-action');clearTimeout(t._t);onAction();};
+  t.classList.add('show','with-action');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show','with-action'),5000);
+}
+
+/* ── SCREENS ── */
+function goToTripList(){if(currentTrip)saveTrips();currentTrip=null;$('screen-detail').classList.remove('active');$('screen-trips').classList.add('active');renderTripList();}
+function openTrip(id){
+  currentTrip=trips.find(t=>t.id===id);if(!currentTrip)return;
+  migrateTrip(currentTrip);
+  expandedPayId=null;
+  paySearchQuery='';payFilterPerson='';payFilterCategory='';
+  const _ps=$('pay-search');if(_ps)_ps.value='';
+  $('screen-trips').classList.remove('active');$('screen-detail').classList.add('active');
+  $('detail-trip-name').textContent=currentTrip.name;
+  const cur=getCurrency();$('curr-flag').textContent=cur.flag;$('curr-sym').textContent=cur.symbol;
+  currentTab='people';
+  ['people','payments','summary','charts'].forEach(t=>{$('tab-'+t).classList.toggle('active',t==='people');$('panel-'+t).classList.toggle('active',t==='people');});
+  renderPeople();renderPayments();updateHeader();renderBudgetBar();
+}
+
+/* ── MODALS ── */
+function openModal(id){$(id).classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+
+/* ── TRIP LIST ── */
+function renderTripList(){
+  const list=$('trips-list');
+  if(!trips.length){
+    list.innerHTML=`<div class="empty-state"><span class="emoji">✈️</span>No trips yet. Create your first one!</div>`;
+    /* reset select state without re-entering renderTripList */
+    _selectMode=false;_selectedTripIds=new Set();
+    $('trip-select-bar').classList.remove('visible');
+    const _sb=$('trip-select-btn');if(_sb){_sb.textContent='☑️';_sb.title='Select trips';}
+    return;
+  }
+  list.innerHTML=trips.slice().reverse().map(trip=>{
+    const total=(trip.payments||[]).reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+    const cur=CURRENCIES.find(c=>c.code===trip.currency)||CURRENCIES[0];
+    const pCount=(trip.people||[]).length,pyCount=(trip.payments||[]).length;
+    const hasBudget=trip.budget>0;
+    const pct=hasBudget?Math.min(100,(total/trip.budget)*100):0;
+    const bCol=pct<70?'var(--green)':pct<90?'var(--amber)':'var(--red)';
+    const isSel=_selectedTripIds.has(trip.id);
+    const cardCls='trip-card'+(_selectMode?' select-mode':'')+(isSel?' selected':'');
+    const clickFn=_selectMode?`toggleTripSelect('${trip.id}')`:`openTrip('${trip.id}')`;
+    const cbHtml=_selectMode?`<div class="trip-cb-wrap"><div class="trip-cb-circle${isSel?' checked':''}">✓</div></div>`:'';
+    const btnsHtml=_selectMode?'':
+      `<div class="trip-card-btns">
+        <button class="trip-del" onclick="event.stopPropagation();showDownloadPicker('${trip.id}')" title="Download">⬇️</button>
+        <button class="trip-del" onclick="event.stopPropagation();duplicateTrip('${trip.id}')" title="Duplicate">📑</button>
+        <button class="trip-del" onclick="event.stopPropagation();askDeleteTrip('${trip.id}')" title="Delete">🗑</button>
+      </div>`;
+    return`<div class="${cardCls}" onclick="${clickFn}">
+      ${cbHtml}
+      <div class="trip-card-left">
+        <div class="trip-name">${esc(trip.name)}</div>
+        <div class="trip-meta">${pCount} people · ${pyCount} payment${pyCount!==1?'s':''}</div>
+        <div class="trip-dates">📅 ${tripDateRange(trip)}</div>
+        ${hasBudget?`<div style="margin-top:5px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${bCol};border-radius:2px"></div></div>`:''}
+        ${total>0?`<div class="trip-amount">${cur.symbol}${fmtN(total)}</div>`:''}
+        ${trip.desc?`<div class="trip-meta" style="margin-top:3px">${esc(trip.desc)}</div>`:''}
+      </div>
+      ${btnsHtml}
+    </div>`;
+  }).join('');
+}
+function toggleSelectMode(){
+  if(_selectMode)exitSelectMode();
+  else{_selectMode=true;_selectedTripIds=new Set();_updateSelectBar();renderTripList();$('trip-select-btn').textContent='✕';$('trip-select-btn').title='Exit select mode';}
+}
+function exitSelectMode(){
+  _selectMode=false;_selectedTripIds=new Set();
+  $('trip-select-bar').classList.remove('visible');
+  const btn=$('trip-select-btn');if(btn){btn.textContent='☑️';btn.title='Select trips';}
+  /* re-render only if the trips screen is active (removes checkboxes from cards) */
+  if($('screen-trips').classList.contains('active'))renderTripList();
+}
+function toggleTripSelect(id){
+  if(_selectedTripIds.has(id))_selectedTripIds.delete(id);
+  else _selectedTripIds.add(id);
+  _updateSelectBar();renderTripList();
+}
+function _updateSelectBar(){
+  const n=_selectedTripIds.size;
+  const bar=$('trip-select-bar');
+  bar.classList.toggle('visible',_selectMode);
+  $('sel-bar-count').textContent=n===0?'None selected':`${n} trip${n!==1?'s':''} selected`;
+  const del=$('sel-bar-del');
+  del.disabled=n===0;
+  del.textContent=n>0?`🗑 Delete (${n})`:'🗑 Delete';
+}
+function confirmDeleteSelected(){
+  if(!_selectedTripIds.size)return;
+  const n=_selectedTripIds.size;
+  $('delete-selected-count-label').textContent=`${n} trip${n!==1?'s':''}`;
+  openModal('modal-confirm-delete-selected');
+}
+function doDeleteSelected(){
+  const n=_selectedTripIds.size;
+  trips=trips.filter(t=>!_selectedTripIds.has(t.id));
+  saveTrips();
+  closeModal('modal-confirm-delete-selected');
+  toast(`${n} trip${n!==1?'s':''} deleted`);
+  exitSelectMode();
+}
+function openNewTripModal(){
+  $('new-trip-name').value='';$('new-trip-desc').value='';
+  $('new-trip-start').value=todayStr();$('new-trip-end').value='';$('new-trip-budget').value='';
+  openModal('modal-new-trip');setTimeout(()=>$('new-trip-name').focus(),100);
+}
+$('new-trip-name').addEventListener('keydown',e=>{if(e.key==='Enter')createTrip();});
+function createTrip(){
+  const name=$('new-trip-name').value.trim();if(!name){$('new-trip-name').focus();return;}
+  const trip={id:gid(),name,desc:$('new-trip-desc').value.trim(),createdAt:Date.now(),
+    startDate:$('new-trip-start').value||todayStr(),endDate:$('new-trip-end').value||'',
+    currency:'INR',budget:parseFloat($('new-trip-budget').value)||0,
+    people:[{id:gid(),name:'Person 1'},{id:gid(),name:'Person 2'}],
+    payments:[],settlementRecords:[]};
+  trips.push(trip);saveTrips();closeModal('modal-new-trip');openTrip(trip.id);
+}
+function askDeleteTrip(id){deletePendingId=id;const t=trips.find(t=>t.id===id);$('delete-trip-name-label').textContent=t?.name||'this trip';openModal('modal-confirm-delete');}
+function confirmDeleteTrip(){trips=trips.filter(t=>t.id!==deletePendingId);saveTrips();closeModal('modal-confirm-delete');renderTripList();toast('Trip deleted');}
+function duplicateTrip(id){
+  const trip=trips.find(t=>t.id===id);if(!trip)return;
+  const copy={
+    id:gid(),
+    name:trip.name+' (Copy)',
+    desc:trip.desc||'',
+    createdAt:Date.now(),
+    startDate:todayStr(),
+    endDate:'',
+    currency:trip.currency,
+    budget:trip.budget||0,
+    people:(trip.people||[]).map(p=>({id:gid(),name:p.name})),
+    payments:[],
+    settlementRecords:[],
+  };
+  trips.push(copy);saveTrips();
+  toast('Trip duplicated ✅');
+  openTrip(copy.id);
+}
+
+/* ── EDIT TRIP ── */
+function openEditDatesModal(){
+  if(!currentTrip)return;
+  $('edit-trip-name').value=currentTrip.name||'';$('edit-trip-desc').value=currentTrip.desc||'';
+  $('edit-trip-start').value=currentTrip.startDate||todayStr();$('edit-trip-end').value=currentTrip.endDate||'';
+  $('edit-trip-budget').value=currentTrip.budget||'';
+  openModal('modal-edit-dates');setTimeout(()=>$('edit-trip-name').focus(),100);
+}
+function saveTripEdits(){
+  if(!currentTrip)return;
+  const name=$('edit-trip-name').value.trim();if(!name){$('edit-trip-name').focus();return;}
+  currentTrip.name=name;currentTrip.desc=$('edit-trip-desc').value.trim();
+  currentTrip.startDate=$('edit-trip-start').value||todayStr();currentTrip.endDate=$('edit-trip-end').value||'';
+  currentTrip.budget=parseFloat($('edit-trip-budget').value)||0;
+  saveTrips();$('detail-trip-name').textContent=currentTrip.name;updateHeader();renderBudgetBar();
+  closeModal('modal-edit-dates');toast('Trip updated ✅');
+}
+
+/* ── BUDGET BAR ── */
+function renderBudgetBar(){
+  const c=$('budget-bar-container');
+  if(!currentTrip||!currentTrip.budget){c.innerHTML='';return;}
+  const total=currentTrip.payments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  const cur=getCurrency();const pct=Math.min(100,(total/currentTrip.budget)*100);
+  const rem=currentTrip.budget-total;const over=rem<0;
+  const bCol=pct<70?'var(--green)':pct<90?'var(--amber)':'var(--red)';
+  const bBg=over?'rgba(239,68,68,.15)':'rgba(34,197,94,.12)';const bTxt=over?'var(--red)':'var(--green)';
+  c.innerHTML=`<div class="budget-bar-wrap">
+    <div class="budget-bar-row">
+      <span class="budget-bar-label">💰 Budget</span>
+      <span class="budget-bar-badge" style="background:${bBg};color:${bTxt}">${over?`⚠️ Over by ${cur.symbol}${fmtN(Math.abs(rem))}`:` ✅ ${cur.symbol}${fmtN(rem)} left`}</span>
+    </div>
+    <div class="budget-bar-track"><div class="budget-bar-fill" style="width:${pct}%;background:${bCol}"></div></div>
+    <div class="budget-bar-nums"><span>${cur.symbol}${fmtN(total)} spent</span><span>of ${cur.symbol}${fmtN(currentTrip.budget)}</span></div>
+  </div>`;
+}
+
+/* ── CURRENCY ── */
+function buildCurrencyDropdown(){
+  const cur=getCurrency();
+  $('currency-dropdown').innerHTML=CURRENCIES.map(c=>`<button class="currency-option ${c.code===cur.code?'active':''}" onclick="selectCurrency('${c.code}')">
+    <span class="flag" style="font-size:18px">${c.flag}</span>
+    <div class="c-info"><span class="c-code">${c.code}</span><span class="c-name"> — ${c.name}</span></div>
+    <span class="c-sym">${c.symbol}</span></button>`).join('');
+}
+function toggleCurrencyPicker(){buildCurrencyDropdown();$('currency-dropdown').classList.toggle('open');}
+function selectCurrency(code){
+  if(!currentTrip)return;currentTrip.currency=code;saveTrips();
+  const cur=getCurrency();$('curr-flag').textContent=cur.flag;$('curr-sym').textContent=cur.symbol;
+  $('currency-dropdown').classList.remove('open');renderAll();
+}
+
+/* ── TABS ── */
+function switchTab(tab){
+  currentTab=tab;
+  ['people','payments','summary','charts'].forEach(t=>{$('tab-'+t).classList.toggle('active',t===tab);$('panel-'+t).classList.toggle('active',t===tab);});
+  if(tab==='summary')renderSummary();
+  if(tab==='charts')renderCharts();
+}
+
+/* ── PEOPLE ── */
+function addPerson(){const p=currentTrip.people;p.push({id:gid(),name:`Person ${p.length+1}`});saveTrips();renderPeople();updateHeader();}
+function removePerson(id){
+  if(currentTrip.people.length<=1)return;
+  currentTrip.people=currentTrip.people.filter(p=>p.id!==id);
+  currentTrip.payments=currentTrip.payments.map(pay=>({...pay,splitAmong:(pay.splitAmong||[]).filter(pid=>pid!==id),splitWith:(pay.splitWith||[]).filter(pid=>pid!==id),paidBy:pay.paidBy===id?'':pay.paidBy}));
+  saveTrips();renderPeople();renderPayments();updateHeader();
+}
+function updatePersonName(id,val){
+  const p=currentTrip.people.find(p=>p.id===id);if(p)p.name=val;
+  document.querySelectorAll('[data-person-av="'+id+'"]').forEach(el=>el.textContent=(val||'?')[0]);
+  saveTrips();updateHeader();
+}
+function renderPeople(){
+  $('people-list').innerHTML=currentTrip.people.map((p,i)=>`
+    <div class="person-row" style="margin-bottom:8px">
+      <div class="av av-md" style="background:${ac(i)}" data-person-av="${p.id}">${esc((p.name||'?')[0])}</div>
+      <input class="name-input" type="text" value="${esc(p.name)}" oninput="updatePersonName('${p.id}',this.value)" placeholder="Name">
+      ${currentTrip.people.length>1?`<button class="remove-btn" onclick="removePerson('${p.id}')">×</button>`:''}
+    </div>`).join('');
+}
+
+/* ── HEADER UPDATE ── */
+function updateHeader(){
+  if(!currentTrip)return;
+  const total=currentTrip.payments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  const cur=getCurrency();
+  $('header-sub').textContent=total>0?`${currentTrip.people.length} people · ${cur.symbol}${fmtN(total)} total`:`${currentTrip.people.length} people`;
+  renderBudgetBar();
+}
+
+/* ── PAYMENTS ── */
+function addPayment(){
+  const nPeople=currentTrip.people.length;
+  const equalPct=nPeople>0?Math.round(100/nPeople):100;
+  const pcts=Object.fromEntries(currentTrip.people.map(p=>[p.id,equalPct]));
+  const pay={id:gid(),label:'',amount:'',method:'cash',paidBy:currentTrip.people[0]?.id??'',
+    splitType:'select',splitAmong:currentTrip.people.map(p=>p.id),splitWith:currentTrip.people.map(p=>p.id),
+    customAmounts:{},percentages:pcts,date:todayStr(),category:'other',receiptUri:''};
+  currentTrip.payments.push(pay);saveTrips();expandedPayId=pay.id;_resetPayFiltersForNewEntry();renderPayments();
+  const newId=pay.id;
+  setTimeout(()=>{
+    const newCard=$('pc-'+newId);
+    if(newCard){
+      newCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+      // focus the label input of the new card
+      const lbl=newCard.querySelector('.label-input');if(lbl)lbl.focus();
+    }
+  },180);
+}
+let _lastDeletedPayment=null;
+function removePayment(id){
+  const idx=currentTrip.payments.findIndex(p=>p.id===id);if(idx===-1)return;
+  const removed=currentTrip.payments[idx];
+  currentTrip.payments.splice(idx,1);
+  if(expandedPayId===id)expandedPayId=null;
+  saveTrips();renderPayments();updateHeader();
+  _lastDeletedPayment={payment:removed,index:idx,tripId:currentTrip.id};
+  actionToast('Payment deleted','Undo',undoDeletePayment);
+}
+function undoDeletePayment(){
+  if(!_lastDeletedPayment)return;
+  const trip=trips.find(t=>t.id===_lastDeletedPayment.tripId);
+  if(!trip){_lastDeletedPayment=null;return;}
+  const idx=Math.min(_lastDeletedPayment.index,trip.payments.length);
+  trip.payments.splice(idx,0,_lastDeletedPayment.payment);
+  saveTrips();
+  if(currentTrip&&currentTrip.id===trip.id){
+    expandedPayId=_lastDeletedPayment.payment.id;
+    _resetPayFiltersForNewEntry();
+    renderPayments();updateHeader();
+  }
+  _lastDeletedPayment=null;
+  toast('Payment restored ✅');
+}
+let deletePendingPaymentId=null;
+function askDeletePayment(id){
+  const idx=currentTrip.payments.findIndex(p=>p.id===id);const pay=currentTrip.payments[idx];if(!pay)return;
+  deletePendingPaymentId=id;
+  $('delete-payment-name-label').textContent=pay.label||`Payment ${idx+1}`;
+  openModal('modal-confirm-delete-payment');
+}
+function confirmDeletePayment(){
+  closeModal('modal-confirm-delete-payment');
+  if(deletePendingPaymentId){removePayment(deletePendingPaymentId);deletePendingPaymentId=null;}
+}
+function duplicatePayment(id){
+  const pay=currentTrip.payments.find(p=>p.id===id);if(!pay)return;
+  const copy=JSON.parse(JSON.stringify(pay));
+  copy.id=gid();
+  copy.label=pay.label?pay.label+' (copy)':'';
+  copy.receiptUri='';
+  currentTrip.payments.push(copy);
+  saveTrips();
+  expandedPayId=copy.id;
+  _resetPayFiltersForNewEntry();
+  renderPayments();updateHeader();
+  toast('Payment duplicated ✅');
+  setTimeout(()=>{
+    const card=$('pc-'+copy.id);
+    if(card){card.scrollIntoView({behavior:'smooth',block:'nearest'});const lbl=card.querySelector('.label-input');if(lbl){lbl.focus();lbl.select();}}
+  },180);
+}
+
+function setPF(id,key,val){
+  const pay=currentTrip.payments.find(p=>p.id===id);if(!pay)return;
+  pay[key]=val;saveTrips();updatePaySummary(id);
+  if(key==='amount'){updateHeader();updateSplitBox(id);}
+  else if(key==='method'){
+    const el=$('pc-'+id);if(!el)return;
+    el.querySelectorAll('.method-pill').forEach(btn=>{btn.classList.remove('active-cash','active-card');if(val==='cash'&&btn.dataset.method==='cash')btn.classList.add('active-cash');if(val==='card'&&btn.dataset.method==='card')btn.classList.add('active-card');});
+  }
+  else if(key==='splitType'){
+    const el=$('pc-'+id);if(el)el.querySelectorAll('.split-toggle-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.st===val));
+    updateSplitBox(id);
+  }
+}
+
+function setCategory(payId,key){
+  const pay=currentTrip.payments.find(p=>p.id===payId);if(!pay)return;
+  pay.category=key;saveTrips();updatePaySummary(payId);
+  const el=$('pc-'+payId);if(!el)return;
+  el.querySelectorAll('.cat-pill').forEach(pill=>pill.classList.toggle('active',pill.dataset.cat===key));
+}
+function openCustomCatModal(payId){
+  _customCatPendingPayId=payId;
+  $('custom-cat-emoji').value='🏷️';$('custom-cat-emoji-btn').textContent='🏷️';$('custom-cat-name').value='';
+  openModal('modal-custom-cat');setTimeout(()=>$('custom-cat-name').focus(),100);
+}
+function saveCustomCategory(){
+  const emoji=$('custom-cat-emoji').value.trim()||'📦';
+  const name=$('custom-cat-name').value.trim();if(!name){$('custom-cat-name').focus();return;}
+  const key='cat_'+gid();
+  categories.push({key,label:name,emoji});
+  saveCategories();closeModal('modal-custom-cat');
+  if(_customCatPendingPayId&&currentTrip){const pay=currentTrip.payments.find(p=>p.id===_customCatPendingPayId);if(pay){pay.category=key;saveTrips();}renderPaymentCard(_customCatPendingPayId);_customCatPendingPayId=null;}
+  renderCategories();
+  toast('Category added ✅');
+}
+
+/* ── ICON PICKER (curated set, shared by the quick-add modal & Categories screen) ── */
+const EMOJI_CHOICES=[
+  '🍔','🍕','🍜','🍣','🍱','☕','🍵','🍺','🍷','🥗','🍳','🍰',
+  '🚗','🚕','🚌','🚆','🚇','✈️','🚢','🚲','🛵','⛽','🚦','🅿️',
+  '🏨','🏠','⛺','🏖️','🏔️','🗺️','🧳','📍',
+  '🛍️','👗','👟','💍','🎁','🛒',
+  '🎬','🎮','🎟️','🎉','🎵','🎨','⚽','🏀','📸',
+  '💊','🏥','💉','🧴','🧘',
+  '💰','💵','💳','🧾','📦','🏷️','📌','✏️','📚','🔧','🐶','🎓'
+];
+let _emojiPickerTarget=null; /* 'modal' | {type:'category',key} */
+function openEmojiPicker(type,key){
+  _emojiPickerTarget=type==='category'?{type:'category',key}:{type:'modal'};
+  const current=type==='category'?(getCatByKey(key).emoji||''):($('custom-cat-emoji').value||'');
+  $('emoji-picker-custom').value='';
+  $('emoji-grid').innerHTML=EMOJI_CHOICES.map(e=>`<button type="button" class="emoji-pick-btn${e===current?' active':''}" onclick="pickEmoji('${e}')">${e}</button>`).join('');
+  openModal('modal-emoji-picker');
+}
+function pickEmoji(emoji){
+  if(!_emojiPickerTarget)return;
+  if(_emojiPickerTarget.type==='category'){
+    updateCategoryEmoji(_emojiPickerTarget.key,emoji);
+    renderCategories();
+  }else{
+    $('custom-cat-emoji').value=emoji;$('custom-cat-emoji-btn').textContent=emoji;
+  }
+  _emojiPickerTarget=null;
+  closeModal('modal-emoji-picker');
+}
+function applyCustomEmoji(){
+  const val=$('emoji-picker-custom').value.trim();
+  if(!val)return;
+  pickEmoji(val);
+}
+
+/* ── CATEGORIES (global master list, add / edit / delete — lives on its
+   own screen outside any trip, so a category created or edited in one
+   trip is instantly available in every other trip) ── */
+function openCategoriesScreen(){
+  _categoriesReturnScreen=(currentTrip&&$('screen-detail').classList.contains('active'))?'detail':'trips';
+  $('screen-trips').classList.remove('active');
+  $('screen-detail').classList.remove('active');
+  $('screen-categories').classList.add('active');
+  renderCategories();
+}
+function closeCategoriesScreen(){
+  $('screen-categories').classList.remove('active');
+  if(_categoriesReturnScreen==='detail'&&currentTrip){
+    $('screen-detail').classList.add('active');
+    if(currentTab==='payments')renderPayments();
+  }else{
+    $('screen-trips').classList.add('active');
+    renderTripList();
+  }
+}
+function addCategory(){
+  const key='cat_'+gid();
+  categories.push({key,label:`Category ${categories.length+1}`,emoji:'🏷️'});
+  saveCategories();renderCategories();
+  setTimeout(()=>{const el=document.querySelector(`[data-cat-name="${key}"]`);if(el){el.focus();el.select();}},50);
+}
+function updateCategoryEmoji(key,val){
+  const c=categories.find(c=>c.key===key);if(!c)return;
+  c.emoji=val.trim()||'🏷️';saveCategories();
+  if(currentTab==='payments')renderPayments();
+}
+function updateCategoryLabel(key,val){
+  const c=categories.find(c=>c.key===key);if(!c)return;
+  c.label=val;saveCategories();
+  if(currentTab==='payments')renderPayments();
+}
+function removeCategory(key){
+  categories=categories.filter(c=>c.key!==key);
+  let reassigned=0;
+  trips.forEach(t=>(t.payments||[]).forEach(p=>{if((p.category||'other')===key){p.category='other';reassigned++;}}));
+  saveCategories();saveTrips();renderCategories();if(currentTab==='payments')renderPayments();
+  toast(reassigned?`Category deleted · ${reassigned} payment${reassigned!==1?'s':''} moved to Other (across all trips)`:'Category deleted');
+}
+function renderCategories(){
+  const el=$('categories-list');if(!el)return;
+  if(!categories.length){el.innerHTML=`<div class="empty-state"><span class="emoji">🏷️</span>No categories yet. Add your first one below.</div>`;return;}
+  el.innerHTML=categories.map(c=>{
+    const usedCount=trips.reduce((sum,t)=>sum+(t.payments||[]).filter(p=>(p.category||'other')===c.key).length,0);
+    return`<div class="person-row" style="margin-bottom:8px">
+      <button type="button" class="cat-emoji-btn" onclick="openEmojiPicker('category','${c.key}')" title="Choose an icon">${c.emoji}</button>
+      <input class="name-input" data-cat-name="${c.key}" type="text" value="${esc(c.label)}" placeholder="Category name" oninput="updateCategoryLabel('${c.key}',this.value)">
+      ${usedCount?`<span class="cat-usage-badge">${usedCount}×</span>`:''}
+      <button class="remove-btn" onclick="removeCategory('${c.key}')" title="Delete category">×</button>
+    </div>`;
+  }).join('');
+}
+
+function buildCategoryPicker(pay){
+  const cats=allCategories();
+  const pills=cats.map(c=>`<button class="cat-pill${pay.category===c.key?' active':''}" data-cat="${c.key}" onclick="setCategory('${pay.id}','${c.key}')">${c.emoji} ${esc(c.label)}</button>`).join('');
+  return`<div class="cat-row"><div class="field-label">🏷️ Category</div><div class="cat-scroll">${pills}<button class="cat-custom-btn" onclick="openCustomCatModal('${pay.id}')">＋ Custom</button></div></div>`;
+}
+
+function buildSplitBox(pay,id){
+  const cur=getCurrency();const amt=parseFloat(pay.amount)||0;
+  const among=(pay.splitAmong||[]).filter(sid=>currentTrip.people.find(p=>p.id===sid));
+  const shareEach=among.length?amt/among.length:0;
+  const manTotal=Object.values(pay.customAmounts||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
+  const manRem=amt-manTotal;
+
+  if(pay.splitType==='select'){
+    const chips=currentTrip.people.map((p,pi)=>{const sel=among.includes(p.id);return`<button class="person-chip${sel?' selected':''}" style="${sel?`background:${ac(pi)};border-color:${ac(pi)}`:''}" onclick="toggleSplitPerson('${id}','${p.id}')">${esc(p.name)}</button>`;}).join('');
+    return`<div class="split-box" id="sb-${id}"><div class="split-box-label">Select who shares (${among.length} selected)</div><div class="person-chips">${chips}</div>${amt>0&&among.length?`<div class="share-preview">${cur.symbol}${fmtN(shareEach)} each</div>`:''}</div>`;
+  }
+  if(pay.splitType==='manual'){
+    const rows=currentTrip.people.map((p,pi)=>`<div class="manual-row"><div class="manual-person"><div class="av av-xs" style="background:${ac(pi)}">${esc((p.name||'?')[0])}</div>${esc(p.name)}</div><div class="manual-input-wrap"><span class="manual-input-sym">${cur.symbol}</span><input class="manual-input" type="number" placeholder="0.00" value="${esc(pay.customAmounts[p.id]||'')}" oninput="setCA('${id}','${p.id}',this.value)"></div></div>`).join('');
+    let st='';if(amt>0){if(Math.abs(manRem)<0.01)st=`<div class="share-ok">✅ Fully assigned</div>`;else if(manRem>0)st=`<div class="share-warn">⚠️ ${cur.symbol}${fmtN(manRem)} unassigned</div>`;else st=`<div class="share-over">⚠️ ${cur.symbol}${fmtN(Math.abs(manRem))} over</div>`;}
+    return`<div class="split-box" id="sb-${id}"><div class="split-box-label">Enter amount per person</div>${rows}${st}</div>`;
+  }
+  if(pay.splitType==='percent'){
+    const pct=pay.percentages||{};
+    const pctTotal=Object.values(pct).reduce((s,v)=>s+(parseFloat(v)||0),0);
+    const rows=currentTrip.people.map((p,pi)=>{const val=parseFloat(pct[p.id])||0;const calc=amt>0?(amt*val/100):0;return`<div class="pct-row"><div class="pct-person"><div class="av av-xs" style="background:${ac(pi)}">${esc((p.name||'?')[0])}</div>${esc(p.name)}</div><div style="display:flex;align-items:center;gap:6px">${amt>0?`<span class="pct-amt">${cur.symbol}${fmtN(calc)}</span>`:''}<div class="pct-input-wrap"><input class="pct-input" type="number" placeholder="0" value="${esc(val||'')}" oninput="setPct('${id}','${p.id}',this.value)" min="0" max="100"><span class="pct-sym">%</span></div></div></div>`;}).join('');
+    const over=Math.abs(pctTotal-100)>0.5;
+    const st=pctTotal===0?'':(over?`<div class="share-over">⚠️ Total: ${pctTotal.toFixed(1)}% (must be 100%)</div>`:`<div class="share-ok">✅ ${pctTotal.toFixed(1)}%</div>`);
+    return`<div class="split-box" id="sb-${id}"><div class="split-box-label">Percentage per person</div>${rows}${st}</div>`;
+  }
+  const n=currentTrip.people.length;
+  return`<div class="split-box" id="sb-${id}"><div class="share-preview">All ${n} people share equally${amt>0?` · ${cur.symbol}${fmtN(amt/n)} each`:''}</div></div>`;
+}
+function updateSplitBox(id){
+  const pay=currentTrip.payments.find(p=>p.id===id);const card=$('pc-'+id);
+  if(!pay||!card)return;const existing=card.querySelector('.split-box');if(!existing)return;
+  const tmp=document.createElement('div');tmp.innerHTML=buildSplitBox(pay,id);existing.replaceWith(tmp.firstElementChild);
+}
+function toggleSplitPerson(payId,personId){
+  const pay=currentTrip.payments.find(p=>p.id===payId);if(!pay)return;
+  const has=(pay.splitAmong||[]).includes(personId);if(has&&pay.splitAmong.length===1)return;
+  pay.splitAmong=has?pay.splitAmong.filter(x=>x!==personId):[...pay.splitAmong,personId];
+  pay.splitWith=pay.splitAmong;saveTrips();updateSplitBox(payId);
+}
+function setCA(payId,personId,val){
+  const pay=currentTrip.payments.find(p=>p.id===payId);if(!pay)return;
+  if(!pay.customAmounts)pay.customAmounts={};pay.customAmounts[personId]=val;saveTrips();
+  const card=$('pc-'+payId);if(!card)return;
+  const amt=parseFloat(pay.amount)||0;const manTotal=Object.values(pay.customAmounts).reduce((s,v)=>s+(parseFloat(v)||0),0);const manRem=amt-manTotal;
+  const cur=getCurrency();card.querySelectorAll('.share-ok,.share-warn,.share-over').forEach(el=>el.remove());
+  const sb=card.querySelector('.split-box');
+  if(sb&&amt>0){const d=document.createElement('div');if(Math.abs(manRem)<0.01){d.className='share-ok';d.textContent='✅ Fully assigned';}else if(manRem>0){d.className='share-warn';d.textContent=`⚠️ ${cur.symbol}${fmtN(manRem)} unassigned`;}else{d.className='share-over';d.textContent=`⚠️ ${cur.symbol}${fmtN(Math.abs(manRem))} over`;}sb.appendChild(d);}
+}
+function setPct(payId,personId,val){
+  const pay=currentTrip.payments.find(p=>p.id===payId);if(!pay)return;
+  if(!pay.percentages)pay.percentages={};pay.percentages[personId]=parseFloat(val)||0;saveTrips();updateSplitBox(payId);
+}
+
+/* ── RECEIPT ── */
+function triggerReceiptUpload(payId){_pendingReceiptPayId=payId;$('receipt-file-input').value='';$('receipt-file-input').click();}
+function handleReceiptFile(e){
+  const file=e.target.files[0];if(!file||!_pendingReceiptPayId)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const maxW=600;const scale=Math.min(1,maxW/img.width);
+      const canvas=document.createElement('canvas');canvas.width=img.width*scale;canvas.height=img.height*scale;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      const compressed=canvas.toDataURL('image/jpeg',0.65);
+      const pay=currentTrip.payments.find(p=>p.id===_pendingReceiptPayId);
+      if(pay){pay.receiptUri=compressed;saveTrips();renderPaymentCard(_pendingReceiptPayId);toast('Receipt attached ✅');}
+    };img.src=ev.target.result;
+  };reader.readAsDataURL(file);
+}
+function removeReceipt(payId){const pay=currentTrip.payments.find(p=>p.id===payId);if(pay){pay.receiptUri='';saveTrips();renderPaymentCard(payId);toast('Receipt removed');}}
+function openReceiptLightbox(src){$('receipt-lightbox-img').src=src;$('receipt-lightbox').classList.add('open');}
+function closeReceiptLightbox(){$('receipt-lightbox').classList.remove('open');}
+
+function getFilteredPayments(){
+  const q=paySearchQuery.trim().toLowerCase();
+  return currentTrip.payments.filter(p=>{
+    if(payFilterPerson&&p.paidBy!==payFilterPerson)return false;
+    if(payFilterCategory&&(p.category||'other')!==payFilterCategory)return false;
+    if(q){
+      const payer=currentTrip.people.find(pp=>pp.id===p.paidBy);
+      const cat=getCatByKey(p.category||'other',currentTrip);
+      const haystack=`${p.label||''} ${payer?.name||''} ${cat.label||''}`.toLowerCase();
+      if(!haystack.includes(q))return false;
+    }
+    return true;
+  });
+}
+function renderPayFilterOptions(){
+  const ps=$('pay-filter-person');
+  if(ps){
+    const keepP=payFilterPerson;
+    ps.innerHTML='<option value="">All people</option>'+currentTrip.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    payFilterPerson=currentTrip.people.find(p=>p.id===keepP)?keepP:'';
+    ps.value=payFilterPerson;
+  }
+  const cs=$('pay-filter-category');
+  if(cs){
+    const keepC=payFilterCategory;
+    const cats=allCategories(currentTrip);
+    cs.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${c.key}">${c.emoji} ${esc(c.label)}</option>`).join('');
+    payFilterCategory=cats.find(c=>c.key===keepC)?keepC:'';
+    cs.value=payFilterCategory;
+  }
+}
+function onPaySearchInput(val){paySearchQuery=val;renderPayments();}
+function onPayFilterChange(){payFilterPerson=$('pay-filter-person').value;payFilterCategory=$('pay-filter-category').value;renderPayments();}
+function clearPayFilters(){
+  paySearchQuery='';payFilterPerson='';payFilterCategory='';
+  const s=$('pay-search');if(s)s.value='';
+  renderPayments();
+}
+function _resetPayFiltersForNewEntry(){
+  paySearchQuery='';payFilterPerson='';payFilterCategory='';
+  const s=$('pay-search');if(s)s.value='';
+  const ps=$('pay-filter-person');if(ps)ps.value='';
+  const cs=$('pay-filter-category');if(cs)cs.value='';
+}
+function togglePayFilters(){
+  const open=$('pay-filter-panel').classList.toggle('open');
+  document.querySelector('.pay-filter-toggle')?.classList.toggle('active',open);
+}
+function updatePayFilterStatus(shown,total){
+  const el=$('pay-filter-status');if(!el)return;
+  const active=paySearchQuery||payFilterPerson||payFilterCategory;
+  el.innerHTML=active?`Showing ${shown} of ${total} · <button class="link-btn" onclick="clearPayFilters()">Clear</button>`:'';
+}
+function renderPayments(){
+  const list=$('payments-list');
+  renderPayFilterOptions();
+  if(!currentTrip.payments.length){
+    list.innerHTML=`<div class="empty-state"><span class="emoji">🧾</span>No payments yet.</div>`;
+    $('view-summary-btn').style.display='none';
+    updatePayFilterStatus(0,0);
+    return;
+  }
+  $('view-summary-btn').style.display='block';
+  const cur=getCurrency();
+  const filtered=getFilteredPayments();
+  updatePayFilterStatus(filtered.length,currentTrip.payments.length);
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty-state"><span class="emoji">🔍</span>No payments match your search/filters.</div>`;
+    return;
+  }
+  const sorted=[...filtered].sort((a,b)=>{const da=a.date||'9999-99-99',db=b.date||'9999-99-99';return da.localeCompare(db);});
+  const groups=[];const groupMap={};
+  sorted.forEach(p=>{const key=p.date||'';if(!groupMap[key]){groupMap[key]=[];groups.push({key,pays:groupMap[key]});}groupMap[key].push(p);});
+  let html='';
+  groups.forEach(({key,pays})=>{
+    const dayTotal=pays.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+    html+=`<div class="date-header"><span class="date-header-label">📅 ${formatDateHeader(key)}</span>${dayTotal>0?`<span class="date-header-total">${cur.symbol}${fmtN(dayTotal)}</span>`:''}</div>`;
+    pays.forEach(p=>{html+=`<div id="pc-${p.id}"></div>`;});
+  });
+  list.innerHTML=html;filtered.forEach(p=>renderPaymentCard(p.id));
+}
+
+function renderPaymentCard(id){
+  const idx=currentTrip.payments.findIndex(p=>p.id===id);
+  const pay=currentTrip.payments[idx];const el=$('pc-'+id);
+  if(!pay||!el)return;
+  const cur=getCurrency();
+  const isOpen=expandedPayId===id;
+  const payer=currentTrip.people.find(p=>p.id===pay.paidBy);
+  const payerIdx=currentTrip.people.findIndex(p=>p.id===pay.paidBy);
+  const cat=getCatByKey(pay.category||'other',currentTrip);
+  const paidByOpts=`<option value="">— select —</option>`+currentTrip.people.map(p=>`<option value="${p.id}"${pay.paidBy===p.id?' selected':''}>${esc(p.name)}</option>`).join('');
+  const receiptHTML=pay.receiptUri
+    ?`<div class="receipt-row"><div class="receipt-thumb-wrap"><img class="receipt-thumb" src="${pay.receiptUri}" alt="receipt" onclick="openReceiptLightbox('${pay.receiptUri}')"><button class="receipt-remove" onclick="removeReceipt('${id}')">×</button></div><span style="font-size:11px;color:var(--dim)">Tap to view</span></div>`
+    :`<button class="receipt-attach-btn" onclick="triggerReceiptUpload('${id}')">📎 Attach receipt photo</button>`;
+  el.innerHTML=`<div class="pay-card${isOpen?' open':''}">
+    <div class="pay-accent" style="background:${ac(idx)}"></div>
+    <div class="pay-main">
+      <div class="pay-summary" role="button" tabindex="0" onclick="togglePayCard('${id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePayCard('${id}');}">
+        <div class="av av-sm" style="background:${payerIdx>=0?ac(payerIdx):'var(--bg4)'}" id="psav-${id}">${esc((payer?.name||'?')[0])}</div>
+        <div class="pay-summary-mid">
+          <div class="pay-summary-label"><span class="pay-summary-label-text" id="psl-${id}">${esc(pay.label||`Payment ${idx+1}`)}</span><span class="pay-summary-cat" id="psc-${id}">${cat.emoji}</span></div>
+          <div class="pay-summary-sub" id="pssub-${id}">${esc(payer?.name||'—')} · ${pay.method==='cash'?'💵':'💳'} · ${pay.date?pay.date.slice(5):'No date'}</div>
+        </div>
+        <div class="pay-summary-right">
+          <span class="pay-summary-amt" id="psamt-${id}">${cur.symbol}${fmtN(pay.amount)}</span>
+          <button class="pay-summary-del" onclick="event.stopPropagation();askDeletePayment('${id}')" title="Delete payment">×</button>
+          <span class="pay-chevron">▸</span>
+        </div>
+      </div>
+      <div class="pay-body">
+        <div class="pay-top-row">
+          <input class="label-input" type="text" value="${esc(pay.label)}" placeholder="Payment ${idx+1}" oninput="setLabel('${id}',this.value)">
+        </div>
+        <div class="pay-amt-row">
+          <div class="amt-wrap"><span class="amt-sym">${cur.symbol}</span><input class="amt-input" type="number" placeholder="0.00" value="${esc(pay.amount)}" oninput="setPF('${id}','amount',this.value)"></div>
+          <div class="method-pills">
+            <button class="method-pill ${pay.method==='cash'?'active-cash':''}" data-method="cash" onclick="setPF('${id}','method','cash')">💵 Cash</button>
+            <button class="method-pill ${pay.method==='card'?'active-card':''}" data-method="card" onclick="setPF('${id}','method','card')">💳 Card</button>
+          </div>
+        </div>
+        <div class="pay-fields-grid">
+          <div class="field-row">
+            <span class="field-label">📅 Date</span>
+            <input type="date" value="${pay.date||todayStr()}" onchange="setPF('${id}','date',this.value)" style="flex:1;font-size:12px;background:rgba(55,65,81,.5);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-weight:600">
+          </div>
+          <div class="field-row"><span class="field-label">Paid by</span><select onchange="setPF('${id}','paidBy',this.value)">${paidByOpts}</select></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Split</span>
+          <div class="split-toggle">
+            <button class="split-toggle-btn${pay.splitType==='select'?' active':''}" data-st="select" onclick="setPF('${id}','splitType','select')">👥 Select</button>
+            <button class="split-toggle-btn${pay.splitType==='manual'?' active':''}" data-st="manual" onclick="setPF('${id}','splitType','manual')">✏️ Manual</button>
+            <button class="split-toggle-btn${pay.splitType==='percent'?' active':''}" data-st="percent" onclick="setPF('${id}','splitType','percent')">% Split</button>
+            <button class="split-toggle-btn${pay.splitType==='equal-all'?' active':''}" data-st="equal-all" onclick="setPF('${id}','splitType','equal-all')">⚖️ All</button>
+          </div>
+        </div>
+        ${buildSplitBox(pay,id)}
+        ${buildCategoryPicker(pay)}
+        ${receiptHTML}
+        <div class="pay-action-row">
+          <button class="pay-dup-btn" onclick="duplicatePayment('${id}')">📋 Duplicate</button>
+          <button class="pay-del-btn" onclick="askDeletePayment('${id}')">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+/* ── ACCORDION CONTROL ── */
+function togglePayCard(id){
+  const prevOpen=expandedPayId;
+  expandedPayId=(prevOpen===id)?null:id;
+  if(prevOpen&&prevOpen!==id)renderPaymentCard(prevOpen);
+  renderPaymentCard(id);
+  if(expandedPayId===id){const card=$('pc-'+id);if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'nearest'}),60);}
+}
+function setLabel(id,val){
+  const pay=currentTrip.payments.find(p=>p.id===id);if(!pay)return;
+  pay.label=val;saveTrips();updatePaySummary(id);
+}
+function updatePaySummary(id){
+  const idx=currentTrip.payments.findIndex(p=>p.id===id);const pay=currentTrip.payments[idx];if(!pay)return;
+  const cur=getCurrency();const payer=currentTrip.people.find(p=>p.id===pay.paidBy);
+  const payerIdx=currentTrip.people.findIndex(p=>p.id===pay.paidBy);
+  const cat=getCatByKey(pay.category||'other',currentTrip);
+  const lblEl=$('psl-'+id);if(lblEl)lblEl.textContent=pay.label||`Payment ${idx+1}`;
+  const catEl=$('psc-'+id);if(catEl)catEl.textContent=cat.emoji;
+  const amtEl=$('psamt-'+id);if(amtEl)amtEl.textContent=cur.symbol+fmtN(pay.amount);
+  const subEl=$('pssub-'+id);if(subEl)subEl.textContent=`${payer?.name||'—'} · ${pay.method==='cash'?'💵':'💳'} · ${pay.date?pay.date.slice(5):'No date'}`;
+  const avEl=$('psav-'+id);if(avEl){avEl.textContent=(payer?.name||'?')[0];avEl.style.background=payerIdx>=0?ac(payerIdx):'var(--bg4)';}
+}
+/* ── SUMMARY CALC ── */
+function calcSummary(){
+  const paid={},owes={};const allIds=currentTrip.people.map(p=>p.id);
+  currentTrip.people.forEach(p=>{paid[p.id]=0;owes[p.id]=0;});
+  currentTrip.payments.forEach(pay=>{
+    const amt=parseFloat(pay.amount)||0;if(!amt)return;
+    if(pay.paidBy&&paid[pay.paidBy]!==undefined)paid[pay.paidBy]+=amt;
+    if(pay.splitType==='equal-all'||pay.splitType==='equal'){const sh=amt/currentTrip.people.length;currentTrip.people.forEach(p=>{owes[p.id]+=sh;});}
+    else if(pay.splitType==='select'){const am=(pay.splitAmong||allIds).filter(id=>owes[id]!==undefined);if(am.length){const sh=amt/am.length;am.forEach(id=>{owes[id]+=sh;});}}
+    else if(pay.splitType==='percent'){const pct=pay.percentages||{};allIds.forEach(id=>{owes[id]+=(amt*(parseFloat(pct[id])||0))/100;});}
+    else{let asgn=0;Object.entries(pay.customAmounts||{}).forEach(([id,v])=>{const a=parseFloat(v)||0;asgn+=a;if(owes[id]!==undefined)owes[id]+=a;});const rem=amt-asgn;if(rem>0.005){const am=(pay.splitAmong||allIds).filter(id=>!(pay.customAmounts||{})[id]&&owes[id]!==undefined);if(am.length){const sh=rem/am.length;am.forEach(id=>{owes[id]+=sh;});}}}
+  });
+  return currentTrip.people.map(p=>({...p,paid:paid[p.id]||0,owes:owes[p.id]||0,net:(paid[p.id]||0)-(owes[p.id]||0)}));
+}
+function calcSettlements(sum){
+  const res=[];
+  const cr=sum.filter(p=>p.net>0.005).map(p=>({...p})).sort((a,b)=>b.net-a.net);
+  const dr=sum.filter(p=>p.net<-0.005).map(p=>({...p})).sort((a,b)=>a.net-b.net);
+  let ci=0,di=0;
+  while(ci<cr.length&&di<dr.length){
+    const a=Math.min(cr[ci].net,-dr[di].net);const rounded=Math.round(a*100)/100;
+    if(rounded>0)res.push({fromId:dr[di].id,from:dr[di].name,toId:cr[ci].id,to:cr[ci].name,amount:rounded});
+    cr[ci].net-=a;dr[di].net+=a;if(cr[ci].net<0.005)ci++;if(dr[di].net>-0.005)di++;
+  }
+  return res;
+}
+
+/* ── SETTLEMENT TRACKING ── */
+function getSettleRecord(fid,tid){return(currentTrip.settlementRecords||[]).find(r=>r.fromId===fid&&r.toId===tid);}
+function paidSoFar(fid,tid){const rec=getSettleRecord(fid,tid);if(!rec)return 0;return(rec.partialPayments||[]).reduce((s,p)=>s+p.amount,0);}
+function isFullySettled(fid,tid,total){const rec=getSettleRecord(fid,tid);if(rec?.fullySettled)return true;return paidSoFar(fid,tid)>=total-0.005;}
+function openSettleRecordModal(fid,tid,total){
+  _pendingSettleFromId=fid;_pendingSettleToId=tid;
+  const from=currentTrip.people.find(p=>p.id===fid)?.name||'?';
+  const to=currentTrip.people.find(p=>p.id===tid)?.name||'?';
+  const cur=getCurrency();const paid=paidSoFar(fid,tid);const rem=Math.max(0,total-paid);
+  $('settle-modal-info').innerHTML=`<strong>${esc(from)}</strong> → <strong>${esc(cur.symbol+fmtN(total))}</strong> → <strong>${esc(to)}</strong><br>Paid so far: ${cur.symbol}${fmtN(paid)} &nbsp;·&nbsp; Remaining: ${cur.symbol}${fmtN(rem)}`;
+  $('settle-partial-amt').value=fmtN(rem).replace(/,/g,'');$('settle-partial-note').value='';
+  $('settle-payment-date').value=todayStr();
+  openModal('modal-settle-record');
+}
+function recordPartialSettlement(){
+  if(!_pendingSettleFromId||!_pendingSettleToId)return;
+  const amt=parseFloat($('settle-partial-amt').value);if(isNaN(amt)||amt<=0){$('settle-partial-amt').focus();return;}
+  _applySettleRecord(amt,false,$('settle-partial-note').value.trim());
+}
+function recordFullSettlement(){
+  if(!_pendingSettleFromId||!_pendingSettleToId)return;
+  const setts=calcSettlements(calcSummary()).find(s=>s.fromId===_pendingSettleFromId&&s.toId===_pendingSettleToId);
+  const total=setts?setts.amount:parseFloat($('settle-partial-amt').value)||0;
+  const rem=Math.max(0,total-paidSoFar(_pendingSettleFromId,_pendingSettleToId));
+  _applySettleRecord(rem,true,$('settle-partial-note').value.trim());
+}
+function _applySettleRecord(amount,markFull,note){
+  const fid=_pendingSettleFromId,tid=_pendingSettleToId;
+  if(!currentTrip.settlementRecords)currentTrip.settlementRecords=[];
+  const selectedDate=$('settle-payment-date')?.value||todayStr();
+  const existing=getSettleRecord(fid,tid);const newPartial={id:gid(),amount,date:selectedDate,note};
+  const newPaid=paidSoFar(fid,tid)+amount;
+  const setts=calcSettlements(calcSummary());const total=(setts.find(s=>s.fromId===fid&&s.toId===tid)||{amount:0}).amount;
+  const nowFull=markFull||(newPaid>=total-0.005);
+  const settledDate=selectedDate;
+  const updRec=existing?{...existing,partialPayments:[...(existing.partialPayments||[]),newPartial],fullySettled:nowFull,settledAt:nowFull?settledDate:undefined}:{id:gid(),fromId:fid,toId:tid,partialPayments:[newPartial],fullySettled:nowFull,settledAt:nowFull?settledDate:undefined};
+  currentTrip.settlementRecords=[...(currentTrip.settlementRecords||[]).filter(r=>!(r.fromId===fid&&r.toId===tid)),updRec];
+  saveTrips();closeModal('modal-settle-record');toast(nowFull?'✅ Fully settled!':getCurrency().symbol+fmtN(amount)+' recorded');renderSummary();
+}
+function resetSettlement(fid,tid){
+  if(!currentTrip.settlementRecords)return;
+  currentTrip.settlementRecords=currentTrip.settlementRecords.filter(r=>!(r.fromId===fid&&r.toId===tid));
+  saveTrips();renderSummary();toast('Settlement reset');
+}
+
+/* ── RENDER SUMMARY ── */
+function renderSummary(){
+  const cur=getCurrency();const totalBill=currentTrip.payments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  const el=$('summary-content');
+  if(!currentTrip.payments.length||!totalBill){el.innerHTML=`<div class="empty-state"><span class="emoji">📊</span>Add payments to see summary</div>`;return;}
+  const summary=calcSummary();const settlements=calcSettlements(summary);
+  const cashTotal=currentTrip.payments.filter(p=>p.method==='cash').reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  const cardTotal=currentTrip.payments.filter(p=>p.method==='card').reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+
+  const payRows=currentTrip.payments.map((pay,i)=>{
+    const payer=currentTrip.people.find(p=>p.id===pay.paidBy);
+    const method=pay.method==='cash'?'💵 Cash':'💳 Card';
+    const cat=getCatByKey(pay.category||'other',currentTrip);
+    const sl=pay.splitType==='equal-all'||pay.splitType==='equal'?`All ${currentTrip.people.length}`:pay.splitType==='select'?`${(pay.splitAmong||[]).length} people`:pay.splitType==='percent'?'% Split':'Manual';
+    return`<div class="summary-row"><div style="flex:1;min-width:0"><div class="s-name">${cat.emoji} ${esc(pay.label||`Payment ${i+1}`)}</div><div class="s-sub">${method} · ${esc(payer?.name??'?')} · ${sl}</div></div><div class="s-amt">${cur.symbol}${fmtN(pay.amount)}</div></div>`;
+  }).join('');
+
+  const personRows=summary.map((p,i)=>{
+    const cls=p.net>0.005?'net-pos':p.net<-0.005?'net-neg':'net-zero';
+    const lbl=p.net>0.005?'gets back':p.net<-0.005?'owes':'settled';const sign=p.net>0.005?'+':'';
+    return`<div class="summary-row"><div style="flex:1;display:flex;align-items:center;gap:8px"><div class="av av-sm" style="background:${ac(i)}">${(p.name||'?')[0]}</div><div><div class="s-name">${esc(p.name)}</div><div class="s-sub">Paid ${cur.symbol}${fmtN(p.paid)} · Share ${cur.symbol}${fmtN(p.owes)}</div></div></div><div style="text-align:right"><div class="${cls}">${sign}${cur.symbol}${fmtN(Math.abs(p.net))}</div><div class="net-lbl">${lbl}</div></div></div>`;
+  }).join('');
+
+  const settleRows=settlements.length===0?`<div class="settled-msg">✅ Everyone is settled up!</div>`
+    :settlements.map(s=>{
+      const paid=paidSoFar(s.fromId,s.toId);const done=isFullySettled(s.fromId,s.toId,s.amount);
+      const rem=Math.max(0,s.amount-paid);const pct=Math.min(100,(paid/s.amount)*100);
+      const rec=getSettleRecord(s.fromId,s.toId);
+      const partials=(rec?.partialPayments||[]);
+      const pills=partials.map(pp=>`<span class="partial-pill">${cur.symbol}${fmtN(pp.amount)}${pp.date?' · '+pp.date.slice(5):''}</span>`).join('');
+      return`<div>
+        <div class="settle-row" style="${done?'opacity:.55':''}">
+          <span class="settle-from">${esc(s.from)}</span>
+          <div class="settle-mid"><span class="settle-arrow">→</span><span class="settle-badge">${cur.symbol}${fmtN(s.amount)}</span><span class="settle-arrow">→</span></div>
+          <span class="settle-to">${esc(s.to)}</span>
+        </div>
+        <div class="settle-track-wrap">
+          ${paid>0?`<div class="settle-progress-bar"><div class="settle-progress-fill" style="width:${pct}%"></div></div>`:''}
+          ${partials.length>0?`<div class="partial-pills">${pills}</div>`:''}
+          <div class="settle-actions">
+            ${done?`<span class="settle-done-badge">✅ Settled${rec?.settledAt?' '+rec.settledAt:''}</span>`:`<button class="settle-record-btn" onclick="openSettleRecordModal('${s.fromId}','${s.toId}',${s.amount})">📝 Record Payment${paid>0?' ('+cur.symbol+fmtN(rem)+' left)':''}</button>`}
+            ${paid>0?`<button class="settle-record-btn" onclick="resetSettlement('${s.fromId}','${s.toId}')" style="opacity:.5;font-size:9px">Reset</button>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  el.innerHTML=`<div class="summary-wrap">
+    <div class="total-card">
+      <div><div class="total-label">Total Bill</div><div class="total-amount">${cur.symbol}${fmtN(totalBill)}</div></div>
+      <div class="total-meta">${currentTrip.people.length} people<br>${currentTrip.payments.length} payments${cashTotal>0?`<br>💵 ${cur.symbol}${fmtN(cashTotal)}`:''}${cardTotal>0?`<br>💳 ${cur.symbol}${fmtN(cardTotal)}`:''}</div>
+    </div>
+    <div class="summary-section"><div class="section-header">🧾 All Payments</div>${payRows}</div>
+    <div class="summary-section"><div class="section-header">👤 Per Person</div>${personRows}</div>
+    <div class="summary-section"><div class="section-header">💸 Who Pays Whom</div>${settleRows}</div>
+  </div>`;
+}
+
+/* ── CHARTS ── */
+function renderCharts(){
+  const el=$('charts-content');
+  if(!currentTrip.payments.length){el.innerHTML=`<div class="empty-state"><span class="emoji">📈</span>Add payments to see charts</div>`;return;}
+  const cur=getCurrency();const summary=calcSummary();
+  const totalBill=currentTrip.payments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  const avgPay=totalBill/Math.max(1,currentTrip.payments.length);
+  const catMap={};
+  currentTrip.payments.forEach(p=>{const k=p.category||'other';catMap[k]=(catMap[k]||0)+(parseFloat(p.amount)||0);});
+  const catEntries=Object.entries(catMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const dayMap={};
+  currentTrip.payments.forEach(p=>{if(p.date)dayMap[p.date]=(dayMap[p.date]||0)+(parseFloat(p.amount)||0);});
+  const dayEntries=Object.entries(dayMap).sort((a,b)=>a[0].localeCompare(b[0]));
+  const isDark=!document.documentElement.classList.contains('light');
+  const textCol=isDark?'#9ca3af':'#5a6f96';const gridCol=isDark?'rgba(55,65,81,.45)':'rgba(168,188,216,.5)';
+  el.innerHTML=`
+    <div class="stat-pills">
+      <div class="stat-pill"><div class="stat-pill-val">${cur.symbol}${fmtN(totalBill)}</div><div class="stat-pill-lbl">Total</div></div>
+      <div class="stat-pill"><div class="stat-pill-val">${cur.symbol}${fmtN(avgPay)}</div><div class="stat-pill-lbl">Avg/Pay</div></div>
+      <div class="stat-pill"><div class="stat-pill-val">${currentTrip.payments.length}</div><div class="stat-pill-lbl">Payments</div></div>
+    </div>
+    <div class="chart-card"><div class="chart-title">💰 Spending per Person</div><canvas id="chart-person" class="chart-canvas" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-title">🏷️ By Category</div><canvas id="chart-cat" class="chart-canvas" height="200"></canvas><div class="chart-legend" id="cat-legend"></div></div>
+    ${dayEntries.length>1?`<div class="chart-card"><div class="chart-title">📅 Daily Spending</div><canvas id="chart-daily" class="chart-canvas" height="160"></canvas></div>`:''}
+    <div class="chart-card"><div class="chart-title">⚖️ Net Balance</div><canvas id="chart-net" class="chart-canvas"></canvas></div>`;
+  requestAnimationFrame(()=>{
+    drawBarChart('chart-person',summary.map((p,i)=>({label:p.name.split(' ')[0],value:p.paid,color:ac(i)})),cur,textCol,gridCol);
+    drawDonutChart('chart-cat',catEntries.map(([k,v],i)=>{const c=getCatByKey(k,currentTrip);return{label:`${c.emoji} ${c.label}`,value:v,color:CHART_COLORS[i%CHART_COLORS.length]};}),cur,textCol,'cat-legend');
+    if(dayEntries.length>1)drawBarChart('chart-daily',dayEntries.map(([k,v])=>({label:k.slice(5),value:v,color:'#6366f1'})),cur,textCol,gridCol);
+    drawNetChart('chart-net',summary,totalBill,cur,textCol);
+  });
+}
+
+function drawBarChart(canvasId,data,cur,textCol,gridCol){
+  const canvas=$(canvasId);if(!canvas||!data.length)return;
+  const dpr=window.devicePixelRatio||1;const W=canvas.offsetWidth||340;const H=200;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const pad={top:16,right:12,bottom:36,left:54};const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
+  const maxVal=Math.max(...data.map(d=>d.value),1);
+  const barW=Math.max(10,Math.min(34,(cW/data.length)*0.6));
+  const gap=(cW-barW*data.length)/(data.length+1);
+  for(let i=0;i<=4;i++){
+    const y=pad.top+cH-(cH*i/4);
+    ctx.strokeStyle=gridCol;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cW,y);ctx.stroke();
+    ctx.fillStyle=textCol;ctx.font=`bold 9px -apple-system,sans-serif`;ctx.textAlign='right';
+    const v=maxVal*i/4;ctx.fillText(v>=1000?`${cur.symbol}${(v/1000).toFixed(1)}k`:`${cur.symbol}${Math.round(v)}`,pad.left-4,y+3);
+  }
+  data.forEach((d,i)=>{
+    const x=pad.left+gap+(barW+gap)*i;const h=Math.max(2,cH*(d.value/maxVal));const y=pad.top+cH-h;
+    const r=Math.min(4,barW/3);ctx.fillStyle=d.color;
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+barW-r,y);ctx.quadraticCurveTo(x+barW,y,x+barW,y+r);
+    ctx.lineTo(x+barW,pad.top+cH);ctx.lineTo(x,pad.top+cH);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();
+    ctx.fillStyle=textCol;ctx.font=`bold 9px -apple-system,sans-serif`;ctx.textAlign='center';
+    ctx.fillText(d.label.slice(0,7),x+barW/2,pad.top+cH+13);
+  });
+}
+function drawDonutChart(canvasId,data,cur,textCol,legendId){
+  const canvas=$(canvasId);if(!canvas||!data.length)return;
+  const dpr=window.devicePixelRatio||1;const W=Math.min(canvas.offsetWidth||300,300);const H=200;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const total=data.reduce((s,d)=>s+d.value,0);const cx=W/2,cy=H/2,r=Math.min(W,H)/2-16,inner=r*0.52;
+  let angle=-Math.PI/2;
+  data.forEach(d=>{const slice=(d.value/total)*2*Math.PI;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();ctx.fillStyle=d.color;ctx.fill();angle+=slice;});
+  const holeFill=document.documentElement.classList.contains('light')?'#e5edfb':'#1f2937';
+  ctx.beginPath();ctx.arc(cx,cy,inner,0,2*Math.PI);ctx.fillStyle=holeFill;ctx.fill();
+  ctx.fillStyle=textCol;ctx.font=`bold 10px -apple-system,sans-serif`;ctx.textAlign='center';ctx.fillText(data.length+' cats',cx,cy+4);
+  const leg=$(legendId);
+  if(leg)leg.innerHTML=data.map((d,i)=>`<div class="chart-legend-item"><div class="chart-legend-dot" style="background:${d.color}"></div>${d.label} · ${cur.symbol}${fmtN(d.value)}</div>`).join('');
+}
+function drawNetChart(canvasId,summary,totalBill,cur,textCol){
+  const canvas=$(canvasId);if(!canvas||!summary.length)return;
+  const dpr=window.devicePixelRatio||1;const rowH=38;const H=Math.max(80,summary.length*rowH+24);
+  const W=canvas.offsetWidth||340;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const maxAbs=Math.max(...summary.map(p=>Math.abs(p.net)),1);
+  const labelW=72,barAreaW=W-labelW-16;
+  summary.forEach((p,i)=>{
+    const y=10+i*rowH;const isPos=p.net>=0;
+    const bW=Math.min(barAreaW/2-46,(Math.abs(p.net)/maxAbs)*(barAreaW/2));
+    const midX=labelW+barAreaW/2;
+    ctx.fillStyle=textCol;ctx.font=`600 11px -apple-system,sans-serif`;ctx.textAlign='right';ctx.fillText(p.name.slice(0,10),labelW-6,y+14);
+    ctx.fillStyle=isPos?'rgba(34,197,94,.65)':'rgba(239,68,68,.65)';
+    if(isPos)ctx.fillRect(midX+2,y+4,bW,rowH-12);else ctx.fillRect(midX-bW-2,y+4,bW,rowH-12);
+    ctx.fillStyle=textCol;ctx.font=`bold 9px -apple-system,sans-serif`;ctx.textAlign=isPos?'left':'right';
+    ctx.fillText((isPos?'+':'')+cur.symbol+fmtN(Math.abs(p.net)),isPos?midX+bW+5:midX-bW-5,y+14);
+    const lineCol=document.documentElement.classList.contains('light')?'rgba(100,120,170,.35)':'rgba(100,116,139,.3)';
+    ctx.strokeStyle=lineCol;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(midX,y+2);ctx.lineTo(midX,y+rowH-4);ctx.stroke();
+  });
+}
+
+/* ── RENDER ALL ── */
+function renderAll(){renderPeople();renderPayments();updateHeader();if($('screen-categories').classList.contains('active'))renderCategories();if(currentTab==='summary')renderSummary();if(currentTab==='charts')renderCharts();}
+
+/* ── EXPORT/IMPORT ── */
+function exportAll(){const payload={trips,categories};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_All_${todayStr()}.json`;a.click();URL.revokeObjectURL(a.href);toast('All trips exported 📤');}
+function exportAllXLSX(){
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load — check your connection');return;}
+  if(!trips.length){toast('No trips to export');return;}
+  const tripsRows=[['Trip','Description','Dates','Currency','Budget','People','Payments','Total Spent']];
+  const payRows=[['Trip','Date','Label','Category','Amount','Method','Paid By','Split Type','Split With']];
+  const balRows=[['Trip','Person','Paid','Share','Net']];
+  const settRows=[['Trip','From','To','Amount']];
+  trips.forEach(trip=>{
+    const{summary,settlements,totalBill,tripDate}=computeTripFinancials(trip);
+    tripsRows.push([trip.name,trip.desc||'',tripDate,trip.currency||'',(trip.budget||0).toFixed(2),trip.people.length,trip.payments.length,totalBill.toFixed(2)]);
+    _paymentRows(trip).slice(1).forEach(r=>payRows.push([trip.name,...r]));
+    _balanceRows(summary).slice(1).forEach(r=>balRows.push([trip.name,...r]));
+    _settlementRows(settlements).slice(1).forEach(r=>settRows.push([trip.name,...r]));
+  });
+  const catRows=[['Key','Label','Emoji']];categories.forEach(c=>catRows.push([c.key,c.label,c.emoji]));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(tripsRows),'Trips');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(payRows),'Payments');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(balRows),'Balances');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(settRows),'Settlements');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(catRows),'Categories');
+  XLSX.writeFile(wb,`SplitTab_All_${todayStr()}.xlsx`);
+  toast('All trips exported as Excel 📤');
+}
+function exportTrip(){
+  if(!currentTrip)return;
+  const usedKeys=new Set((currentTrip.payments||[]).map(p=>p.category||'other'));
+  const usedCats=categories.filter(c=>usedKeys.has(c.key));
+  const payload={trip:currentTrip,categories:usedCats};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const slug=currentTrip.name.replace(/[^a-z0-9]/gi,'_').slice(0,30);
+  a.download=`SplitTab_${slug}.json`;a.click();URL.revokeObjectURL(a.href);
+  toast('Trip exported 📤');
+}
+function exportTripXLSX(){
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load — check your connection');return;}
+  if(!currentTrip)return;
+  const{summary,settlements}=computeTripFinancials(currentTrip);
+  const slug=currentTrip.name.replace(/[^a-z0-9]/gi,'_').slice(0,30);
+  const usedKeys=new Set((currentTrip.payments||[]).map(p=>p.category||'other'));
+  const usedCats=categories.filter(c=>usedKeys.has(c.key));
+  const catRows=[['Key','Label','Emoji']];usedCats.forEach(c=>catRows.push([c.key,c.label,c.emoji]));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(_paymentRows(currentTrip)),'Payments');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(_balanceRows(summary)),'Balances');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(_settlementRows(settlements)),'Settlements');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(catRows),'Categories');
+  XLSX.writeFile(wb,`SplitTab_${slug}_Backup.xlsx`);
+  toast('Trip exported as Excel 📤');
+}
+function triggerImport(){$('import-file').click();}
+function handleImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const raw=JSON.parse(ev.target.result);
+      let incomingTrips=[],incomingCats=[];
+      if(Array.isArray(raw))incomingTrips=raw; /* legacy: bare array of trips */
+      else if(raw&&Array.isArray(raw.trips)){incomingTrips=raw.trips;incomingCats=raw.categories||[];} /* exportAll bundle */
+      else if(raw&&raw.trip){incomingTrips=[raw.trip];incomingCats=raw.categories||[];} /* exportTrip bundle */
+      else if(raw&&raw.id&&raw.name)incomingTrips=[raw]; /* legacy: bare single trip */
+      let added=0;
+      incomingTrips.forEach(t=>{migrateTrip(t);if(t.id&&t.name&&!trips.find(x=>x.id===t.id)){trips.push(t);added++;}});
+      let catsAdded=0;
+      incomingCats.forEach(c=>{if(c&&c.key&&!categories.find(x=>x.key===c.key)){categories.push({key:c.key,label:c.label||'Category',emoji:c.emoji||'🏷️'});catsAdded++;}});
+      saveTrips();if(catsAdded)saveCategories();
+      renderTripList();
+      toast(`Imported ${added} trip${added!==1?'s':''}${catsAdded?` · ${catsAdded} categor${catsAdded!==1?'ies':'y'} added`:''} ✅`);
+    }catch(err){toast('Import failed — invalid file');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+/* ── IMPORT PICKER (JSON backup vs CSV payments, used inside a trip) ── */
+function openImportPicker(){openDataManager('import');}
+function closeImportPicker(){closeDataManager();}
+
+/* ═══════════════════════════════════════════
+   DATA MANAGER — unified Import / Download / Export
+   ═══════════════════════════════════════════ */
+let _dmMode=null;        // 'import'|'download'|'export'
+let _dmScope='this';     // 'this'|'select'|'all'
+let _dmSelTrips=new Set();
+
+function openDataManager(mode){
+  _dmMode=mode||null;
+  _dmScope=currentTrip?'this':'all';
+  _dmSelTrips=new Set(currentTrip?[currentTrip.id]:trips.map(t=>t.id));
+  _renderDM(_dmMode?_dmMode:'home');
+  $('dm-backdrop').classList.add('open');
+  $('dm-sheet').classList.add('open');
+}
+function closeDataManager(){
+  $('dm-backdrop').classList.remove('open');
+  $('dm-sheet').classList.remove('open');
+}
+function _renderDM(page){
+  const el=$('dm-content');
+  if(!el)return;
+  if(page==='home') el.innerHTML=_dmHome();
+  else if(page==='import') el.innerHTML=_dmImport();
+  else if(page==='download'||page==='export'){_dmMode=page;el.innerHTML=_dmAction(page);}
+}
+
+/* ── Home page ── */
+function _dmHome(){
+  return `<div class="dm-handle" onclick="closeDataManager()"></div>
+  <div class="dm-title">📂 Data Manager</div>
+  <button class="dm-action-btn" onclick="_renderDM('import')">
+    <span class="dm-a-icon">📥</span>
+    <div class="dm-a-info"><div class="dm-a-label">Import</div><div class="dm-a-desc">Restore a backup or bulk-add payments to a trip</div></div>
+    <span class="dm-a-chev">›</span>
+  </button>
+  <button class="dm-action-btn" onclick="_renderDM('download')">
+    <span class="dm-a-icon">⬇️</span>
+    <div class="dm-a-info"><div class="dm-a-label">Download Report</div><div class="dm-a-desc">HTML · PDF · Text · CSV · Excel · PNG</div></div>
+    <span class="dm-a-chev">›</span>
+  </button>
+  <button class="dm-action-btn" onclick="_renderDM('export')">
+    <span class="dm-a-icon">📤</span>
+    <div class="dm-a-info"><div class="dm-a-label">Export Backup</div><div class="dm-a-desc">Save trips as JSON or Excel for safekeeping</div></div>
+    <span class="dm-a-chev">›</span>
+  </button>
+  <div class="dm-spacer"></div>`;
+}
+
+/* ── Import page ── */
+function _dmImport(){
+  const hasTrip=!!currentTrip;
+  const tripNote=hasTrip?`into <strong style="color:var(--text)">${currentTrip.name}</strong>`:'<span style="color:#f87171">open a trip first</span>';
+  return `<div class="dm-handle" onclick="closeDataManager()"></div>
+  <div class="dm-nav"><button class="dm-back" onclick="_renderDM('home')">‹</button><div class="dm-title">Import</div></div>
+  <div class="dm-sub">Restore Backup</div>
+  <button class="dm-imp-btn" onclick="closeDataManager();triggerImport()">
+    <span class="dm-imp-icon">🗂️</span><div><div class="dm-imp-label">Trip Backup (.json)</div><div class="dm-imp-desc">Restore trips previously exported from SplitTab</div></div>
+  </button>
+  <div class="dm-sub">Add Payments — ${tripNote}</div>
+  <button class="dm-imp-btn" ${!hasTrip?'disabled style="opacity:.35;pointer-events:none"':''} onclick="closeDataManager();triggerImportCSV()">
+    <span class="dm-imp-icon">📊</span><div><div class="dm-imp-label">Payments CSV (.csv)</div><div class="dm-imp-desc">Bulk-add from a spreadsheet</div></div>
+  </button>
+  <button class="dm-imp-btn" ${!hasTrip?'disabled style="opacity:.35;pointer-events:none"':''} onclick="closeDataManager();triggerImportXLSX()">
+    <span class="dm-imp-icon">📗</span><div><div class="dm-imp-label">Payments Excel (.xlsx)</div><div class="dm-imp-desc">Bulk-add from an Excel workbook</div></div>
+  </button>
+  <div class="dm-divider"></div>
+  <div class="dm-sub">Templates</div>
+  <button class="dm-imp-btn dashed" onclick="closeDataManager();downloadCSVTemplate()">
+    <span class="dm-imp-icon">📄</span><div><div class="dm-imp-label">Download CSV Template</div><div class="dm-imp-desc">Starter file with the right columns</div></div>
+  </button>
+  <button class="dm-imp-btn dashed" onclick="closeDataManager();downloadXLSXTemplate()">
+    <span class="dm-imp-icon">📄</span><div><div class="dm-imp-label">Download Excel Template</div><div class="dm-imp-desc">Same columns as a .xlsx workbook</div></div>
+  </button>
+  <div class="dm-spacer"></div>`;
+}
+
+/* ── Download / Export page ── */
+function _dmAction(mode){
+  const isDownload=mode==='download';
+  const title=isDownload?'Download Report':'Export Backup';
+  const scope=_dmScope;
+  const hasThis=!!currentTrip;
+
+  // Trip checklist
+  let listHTML='';
+  if(scope==='select'){
+    listHTML=`<div class="dm-trip-list">`+(trips.length===0
+      ?'<div style="padding:12px 16px;color:var(--dim);font-size:13px">No trips yet</div>'
+      :trips.map(t=>`<label class="dm-trip-row">
+        <input type="checkbox" class="dm-trip-cb" ${_dmSelTrips.has(t.id)?'checked':''}
+          onchange="dmToggleTrip('${t.id}',this.checked)">
+        <span class="dm-trip-name">${t.name}</span>
+        <span class="dm-trip-meta">${(t.payments||[]).length} payments</span>
+      </label>`).join('')
+    )+`</div>`;
+  }
+
+  const count=scope==='this'?1:scope==='all'?trips.length:_dmSelTrips.size;
+  const isSingle=count===1;
+  const noTrips=count===0;
+
+  // Format grid
+  let fmtsHTML='';
+  if(isDownload){
+    const fmts=[
+      {k:'html',i:'🌐',l:'HTML',n:'Browser / share'},
+      {k:'pdf', i:'🖨️',l:'PDF', n:'Print dialog'},
+      {k:'text',i:'💬',l:'Text',n:'WhatsApp-friendly'},
+      {k:'csv', i:'📊',l:'CSV', n:'Spreadsheet'},
+      {k:'xlsx',i:'📗',l:'Excel',n:'Multi-sheet workbook'},
+      {k:'png', i:'🖼️',l:'Image',n:isSingle?'Summary card':'Single trip only'},
+    ];
+    fmtsHTML=`<div class="dm-sub">Format</div><div class="dm-fmt-grid">`+
+      fmts.map(f=>{
+        const dis=noTrips||(f.k==='png'&&!isSingle);
+        return `<button class="dm-fmt-cell${dis?' disabled':''}" onclick="dmExecDownload('${f.k}')">
+          <span class="dm-fmt-icon">${f.i}</span>
+          <span class="dm-fmt-label">${f.l}</span>
+          <span class="dm-fmt-note">${f.n}</span>
+        </button>`;
+      }).join('')+`</div>`;
+  }else{
+    fmtsHTML=`<div class="dm-sub">Format</div><div class="dm-fmt-grid">
+      <button class="dm-fmt-cell${noTrips?' disabled':''}" onclick="dmExecExport('json')">
+        <span class="dm-fmt-icon">🗂️</span><span class="dm-fmt-label">JSON</span><span class="dm-fmt-note">Restorable backup</span>
+      </button>
+      <button class="dm-fmt-cell${noTrips?' disabled':''}" onclick="dmExecExport('xlsx')">
+        <span class="dm-fmt-icon">📗</span><span class="dm-fmt-label">Excel</span><span class="dm-fmt-note">Viewable workbook</span>
+      </button>
+    </div>`;
+  }
+
+  const pillThis=hasThis?`<button class="dm-pill${scope==='this'?' active':''}" onclick="dmSetScope('this')">This Trip</button>`:'';
+  const pillSel=`<button class="dm-pill${scope==='select'?' active':''}" onclick="dmSetScope('select')">Selected</button>`;
+  const pillAll=`<button class="dm-pill${scope==='all'?' active':''}" onclick="dmSetScope('all')">All Trips</button>`;
+
+  return `<div class="dm-handle" onclick="closeDataManager()"></div>
+  <div class="dm-nav"><button class="dm-back" onclick="_renderDM('home')">‹</button><div class="dm-title">${title}</div></div>
+  <div class="dm-sub">Scope</div>
+  <div class="dm-scope-row">${pillThis}${pillSel}${pillAll}</div>
+  ${listHTML}
+  ${noTrips?'<div class="dm-warn">⚠️ Select at least one trip</div>':''}
+  ${!noTrips?`<div style="font-size:11px;color:var(--dim);padding:4px 18px">${count} trip${count!==1?'s':''} selected</div>`:''}
+  ${fmtsHTML}`;
+}
+
+function dmToggleTrip(id,checked){
+  if(checked)_dmSelTrips.add(id);else _dmSelTrips.delete(id);
+  _renderDM(_dmMode);
+}
+function dmSetScope(scope){
+  _dmScope=scope;
+  if(scope==='this'&&currentTrip)_dmSelTrips=new Set([currentTrip.id]);
+  else if(scope==='all')_dmSelTrips=new Set(trips.map(t=>t.id));
+  _renderDM(_dmMode);
+}
+function _dmGetTrips(){
+  if(_dmScope==='this')return currentTrip?[currentTrip]:[];
+  if(_dmScope==='all')return trips;
+  return trips.filter(t=>_dmSelTrips.has(t.id));
+}
+
+function dmExecDownload(fmt){
+  const sel=_dmGetTrips();
+  if(!sel.length){toast('Select at least one trip');return;}
+  closeDataManager();
+  if(sel.length===1){
+    _downloadTripId=sel[0].id;
+    execDownload(fmt);
+    _downloadTripId=null;
+  }else{
+    _bulkDownload(sel,fmt);
+  }
+}
+
+function dmExecExport(fmt){
+  const sel=_dmGetTrips();
+  if(!sel.length){toast('Select at least one trip');return;}
+  closeDataManager();
+  if(fmt==='json'){
+    if(sel.length===trips.length)exportAll();
+    else _exportSelectedJSON(sel);
+  }else{
+    _exportSelectedXLSX(sel);
+  }
+}
+
+/* ── Bulk download (multi-trip) ── */
+function _bulkDownload(sel,fmt){
+  const slug=`${sel.length}trips_${todayStr()}`;
+  if(fmt==='html')_bulkHTML(sel,slug);
+  else if(fmt==='pdf')_bulkPDF(sel,slug);
+  else if(fmt==='text')_bulkText(sel,slug);
+  else if(fmt==='csv')_bulkCSV(sel,slug);
+  else if(fmt==='xlsx')_bulkXLSX(sel,slug);
+  else toast('Select a single trip for PNG');
+}
+function _bulkHTML(sel,slug){
+  const bodies=sel.map(t=>{const{cur,summary,settlements,totalBill,tripDate}=computeTripFinancials(t);return _reportHTML(t,cur,summary,settlements,totalBill,tripDate);});
+  const combined=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>SplitTab — ${sel.length} Trips</title></head><body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0">${bodies.join('<div style="height:32px;background:#0f172a"></div>')}</body></html>`;
+  const blob=new Blob([combined],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}.html`;a.click();URL.revokeObjectURL(a.href);
+  toast(`${sel.length} trips downloaded as HTML ✅`);
+}
+function _bulkPDF(sel,slug){
+  const bodies=sel.map(t=>{const{cur,summary,settlements,totalBill,tripDate}=computeTripFinancials(t);return _reportHTML(t,cur,summary,settlements,totalBill,tripDate);});
+  const combined=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>SplitTab</title></head><body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0">${bodies.join('<div style="page-break-after:always;height:32px;background:#0f172a"></div>')}</body></html>`;
+  const w=window.open('','_blank');w.document.write(combined);w.document.close();
+  setTimeout(()=>{w.focus();w.print();},600);
+}
+function _bulkText(sel,slug){
+  const parts=sel.map(t=>{const{cur,summary,settlements,totalBill,tripDate}=computeTripFinancials(t);let s=`\n${'═'.repeat(42)}\n${t.name.toUpperCase()}\n${'═'.repeat(42)}\n`;return s+_textBody(t,cur,summary,settlements,totalBill,tripDate);});
+  const blob=new Blob([parts.join('\n')],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}.txt`;a.click();URL.revokeObjectURL(a.href);
+  toast(`${sel.length} trips downloaded as text ✅`);
+}
+function _bulkCSV(sel,slug){
+  const rows=[['Trip','Date','Label','Category','Amount','Method','Paid By','Split Type','Split With']];
+  sel.forEach(t=>{_paymentRows(t).slice(1).forEach(r=>rows.push([t.name,...r]));});
+  rows.push([]);rows.push(['Trip','Person','Paid','Share','Net']);
+  sel.forEach(t=>{const{summary}=computeTripFinancials(t);_balanceRows(summary).slice(1).forEach(r=>rows.push([t.name,...r]));});
+  const csv='\uFEFF'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}.csv`;a.click();URL.revokeObjectURL(a.href);
+  toast(`${sel.length} trips downloaded as CSV ✅`);
+}
+function _bulkXLSX(sel,slug){
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load');return;}
+  const wb=XLSX.utils.book_new();
+  sel.forEach(t=>{
+    const{summary,settlements}=computeTripFinancials(t);
+    const sheetName=t.name.replace(/[\\\/\?\*\[\]]/g,'').slice(0,28);
+    const rows=[..._paymentRows(t),[],..._balanceRows(summary),[],..._settlementRows(settlements)];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),sheetName||`Trip${wb.SheetNames.length+1}`);
+  });
+  XLSX.writeFile(wb,`SplitTab_${slug}.xlsx`);
+  toast(`${sel.length} trips downloaded as Excel ✅`);
+}
+
+/* ── Export selected trips ── */
+function _exportSelectedJSON(sel){
+  const usedKeys=new Set(sel.flatMap(t=>(t.payments||[]).map(p=>p.category||'other')));
+  const payload={trips:sel,categories:categories.filter(c=>usedKeys.has(c.key))};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${sel.length}trips_${todayStr()}.json`;a.click();URL.revokeObjectURL(a.href);
+  toast(`${sel.length} trip${sel.length!==1?'s':''} exported 📤`);
+}
+function _exportSelectedXLSX(sel){
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load');return;}
+  const tripRows=[['Trip','Dates','Currency','Budget','People','Payments','Total Spent']];
+  const payRows=[['Trip','Date','Label','Category','Amount','Method','Paid By','Split Type','Split With']];
+  const balRows=[['Trip','Person','Paid','Share','Net']];
+  const settRows=[['Trip','From','To','Amount']];
+  sel.forEach(t=>{
+    const{summary,settlements,totalBill,tripDate}=computeTripFinancials(t);
+    tripRows.push([t.name,tripDate,t.currency||'',(t.budget||0).toFixed(2),t.people.length,(t.payments||[]).length,totalBill.toFixed(2)]);
+    _paymentRows(t).slice(1).forEach(r=>payRows.push([t.name,...r]));
+    _balanceRows(summary).slice(1).forEach(r=>balRows.push([t.name,...r]));
+    _settlementRows(settlements).slice(1).forEach(r=>settRows.push([t.name,...r]));
+  });
+  const catKeys=new Set(sel.flatMap(t=>(t.payments||[]).map(p=>p.category||'other')));
+  const catRows=[['Key','Label','Emoji']];categories.filter(c=>catKeys.has(c.key)).forEach(c=>catRows.push([c.key,c.label,c.emoji]));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(tripRows),'Trips');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(payRows),'Payments');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(balRows),'Balances');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(settRows),'Settlements');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(catRows),'Categories');
+  XLSX.writeFile(wb,`SplitTab_${sel.length}trips_${todayStr()}.xlsx`);
+  toast(`${sel.length} trip${sel.length!==1?'s':''} exported as Excel 📤`);
+}
+
+/* ── CSV HELPERS (no external library — keeps the app dependency-free/offline) ── */
+function csvEscape(val){
+  const s=val===undefined||val===null?'':String(val);
+  if(/[",\r\n]/.test(s))return'"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function parseCSVText(text){
+  const rows=[];let row=[];let field='';let inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQuotes){
+      if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else inQuotes=false;}
+      else field+=c;
+    }else{
+      if(c==='"')inQuotes=true;
+      else if(c===','){row.push(field);field='';}
+      else if(c==='\n'){row.push(field);rows.push(row);row=[];field='';}
+      else if(c==='\r'){/* skip, \n handles the line break */}
+      else field+=c;
+    }
+  }
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  return rows.filter(r=>r.length>1||(r[0]||'').trim()!=='');
+}
+function _matchPersonByName(name){
+  if(!name||!currentTrip)return null;
+  const n=String(name).trim().toLowerCase();if(!n)return null;
+  return currentTrip.people.find(p=>(p.name||'').trim().toLowerCase()===n)||null;
+}
+function _matchCategoryByLabel(label){
+  if(!currentTrip)return'other';
+  const n=String(label||'').trim().toLowerCase();if(!n)return'other';
+  const cats=allCategories(currentTrip);
+  const byLabel=cats.find(c=>c.label.toLowerCase()===n);if(byLabel)return byLabel.key;
+  const byKey=cats.find(c=>c.key.toLowerCase()===n);if(byKey)return byKey.key;
+  return'other';
+}
+function _parseSplitTypeCSV(raw){
+  const n=String(raw||'').trim().toLowerCase();
+  if(n.includes('percent'))return'percent';
+  if(n.includes('manual'))return'manual';
+  if(n.includes('select'))return'select';
+  return'equal-all';
+}
+function triggerImportCSV(){if(!currentTrip){toast('Open a trip first to import payments');return;}$('import-csv-file').click();}
+function downloadCSVTemplate(){
+  const ppl=(currentTrip&&currentTrip.people.length?currentTrip.people:[{name:'Alice'},{name:'Bob'}]).map(p=>p.name);
+  const p1=ppl[0]||'Alice',p2=ppl[1]||'Bob';
+  const rows=[
+    ['Date','Label','Category','Amount','Method','Paid By','Split Type','Split With'],
+    [todayStr(),'Dinner','Food & Drink','1200','Card',p1,'Select',`${p1}; ${p2}`],
+    [todayStr(),'Taxi','Transport','300','Cash',p2,'Equal','All'],
+  ];
+  const csv='\uFEFF'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SplitTab_Import_Template.csv';a.click();URL.revokeObjectURL(a.href);
+  toast('Template downloaded ✅');
+}
+function downloadXLSXTemplate(){
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load — check your connection');return;}
+  const ppl=(currentTrip&&currentTrip.people.length?currentTrip.people:[{name:'Alice'},{name:'Bob'}]).map(p=>p.name);
+  const p1=ppl[0]||'Alice',p2=ppl[1]||'Bob';
+  const rows=[
+    ['Date','Label','Category','Amount','Method','Paid By','Split Type','Split With'],
+    [todayStr(),'Dinner','Food & Drink','1200','Card',p1,'Select',`${p1}; ${p2}`],
+    [todayStr(),'Taxi','Transport','300','Cash',p2,'Equal','All'],
+  ];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Payments');
+  XLSX.writeFile(wb,'SplitTab_Import_Template.xlsx');
+  toast('Template downloaded ✅');
+}
+/* Shared row-processor: rows is an array-of-arrays, rows[0] is the header. Used by both CSV and Excel import. */
+function _importPaymentRows(rows){
+  if(!rows.length){toast('File is empty');return;}
+  const header=rows[0].map(h=>String(h??'').trim().toLowerCase());
+  const col={date:header.indexOf('date'),label:header.indexOf('label'),category:header.indexOf('category'),amount:header.indexOf('amount'),method:header.indexOf('method'),paidby:header.indexOf('paid by'),splittype:header.indexOf('split type'),splitwith:header.indexOf('split with')};
+  if(col.amount===-1){toast('File needs an "Amount" column — try the template');return;}
+  const allIds=currentTrip.people.map(p=>p.id);
+  const equalPct=currentTrip.people.length?Math.round(100/currentTrip.people.length):100;
+  let added=0,skipped=0,unmatched=0;
+  for(let r=1;r<rows.length;r++){
+    const row=rows[r];if(!row||row.every(c=>String(c??'').trim()==='')) continue;
+    const amount=parseFloat(row[col.amount]);
+    if(isNaN(amount)||amount<=0){skipped++;continue;}
+    const dateRaw=col.date>-1?String(row[col.date]||'').trim():'';
+    const date=/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)?dateRaw:todayStr();
+    const label=col.label>-1?String(row[col.label]||'').trim():'';
+    const category=_matchCategoryByLabel(col.category>-1?row[col.category]:'');
+    const methodRaw=(col.method>-1?String(row[col.method]||''):'').toLowerCase();
+    const method=methodRaw.includes('card')?'card':'cash';
+    const payerName=col.paidby>-1?String(row[col.paidby]||'').trim():'';
+    const payer=_matchPersonByName(payerName);
+    if(payerName&&!payer)unmatched++;
+    const paidBy=payer?payer.id:(currentTrip.people[0]?.id||'');
+    const splitType=_parseSplitTypeCSV(col.splittype>-1?row[col.splittype]:'');
+    const splitWithRaw=col.splitwith>-1?String(row[col.splitwith]||'').trim():'';
+    let splitAmong=allIds.slice();
+    let customAmounts={};
+    let percentages=Object.fromEntries(currentTrip.people.map(p=>[p.id,equalPct]));
+    if(splitType==='select'){
+      const names=splitWithRaw.split(';').map(s=>s.trim()).filter(Boolean);
+      const ids=names.map(n=>_matchPersonByName(n)).filter(Boolean).map(p=>p.id);
+      splitAmong=ids.length?ids:allIds.slice();
+    }else if(splitType==='percent'){
+      percentages=Object.fromEntries(currentTrip.people.map(p=>[p.id,0]));
+      splitWithRaw.split(';').forEach(entry=>{const m=entry.split(':');if(m.length<2)return;const person=_matchPersonByName(m[0]);if(!person)return;percentages[person.id]=parseFloat(m[1].replace('%',''))||0;});
+    }else if(splitType==='manual'){
+      splitWithRaw.split(';').forEach(entry=>{const m=entry.split(':');if(m.length<2)return;const person=_matchPersonByName(m[0]);if(!person)return;customAmounts[person.id]=parseFloat(m[1])||0;});
+    }
+    currentTrip.payments.push({id:gid(),label,amount,method,paidBy,splitType,splitAmong,splitWith:splitAmong,customAmounts,percentages,date,category,receiptUri:''});
+    added++;
+  }
+  saveTrips();renderPayments();updateHeader();
+  let msg=`Imported ${added} payment${added!==1?'s':''} ✅`;
+  if(skipped)msg+=` · ${skipped} skipped`;
+  if(unmatched)msg+=` · ${unmatched} payer${unmatched!==1?'s':''} unmatched`;
+  toast(msg);
+}
+function handleImportCSV(e){
+  const file=e.target.files[0];if(!file)return;
+  if(!currentTrip){toast('Open a trip first');e.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{_importPaymentRows(parseCSVText(String(ev.target.result)));}
+    catch(err){toast('CSV import failed — check the file format');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function triggerImportXLSX(){if(!currentTrip){toast('Open a trip first to import payments');return;}$('import-xlsx-file').click();}
+function handleImportXLSX(e){
+  const file=e.target.files[0];if(!file)return;
+  if(!currentTrip){toast('Open a trip first');e.target.value='';return;}
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load — check your connection');e.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+      _importPaymentRows(rows);
+    }catch(err){toast('Excel import failed — check the file format');}
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value='';
+}
+
+/* ── DOWNLOAD PICKER ── */
+let _downloadTripId=null;
+function showDownloadPicker(tripId){if(tripId){_dmScope='this';_dmSelTrips=new Set([tripId]);_downloadTripId=tripId;}openDataManager('download');}
+function closeFormatPicker(){closeDataManager();}
+function computeTripFinancials(trip){
+  const cur=CURRENCIES.find(c=>c.code===trip.currency)||CURRENCIES[0];
+  const people=trip.people||[];const payments=trip.payments||[];
+  const paid={},owes={};people.forEach(p=>{paid[p.id]=0;owes[p.id]=0;});
+  const allIds=people.map(p=>p.id);
+  payments.forEach(pay=>{
+    const amt=parseFloat(pay.amount)||0;if(!amt)return;
+    if(pay.paidBy&&paid[pay.paidBy]!==undefined)paid[pay.paidBy]+=amt;
+    if(pay.splitType==='equal-all'||pay.splitType==='equal'){const sh=amt/people.length;people.forEach(p=>{owes[p.id]+=sh;});}
+    else if(pay.splitType==='select'){const am=(pay.splitAmong||allIds).filter(id=>owes[id]!==undefined);if(am.length){const sh=amt/am.length;am.forEach(id=>{owes[id]+=sh;});}}
+    else if(pay.splitType==='percent'){const pct=pay.percentages||{};allIds.forEach(id=>{owes[id]+=(amt*(parseFloat(pct[id])||0))/100;});}
+    else{let asgn=0;Object.entries(pay.customAmounts||{}).forEach(([id,v])=>{const a=parseFloat(v)||0;asgn+=a;if(owes[id]!==undefined)owes[id]+=a;});const rem=amt-asgn;if(rem>0.005){const am=(pay.splitAmong||allIds).filter(id=>!(pay.customAmounts||{})[id]&&owes[id]!==undefined);if(am.length){const sh=rem/am.length;am.forEach(id=>{owes[id]+=sh;});}}}
+  });
+  const summary=people.map(p=>({...p,paid:paid[p.id]||0,owes:owes[p.id]||0,net:(paid[p.id]||0)-(owes[p.id]||0)}));
+  const settlements=[];const cr=summary.filter(p=>p.net>0.005).map(p=>({...p})).sort((a,b)=>b.net-a.net);const dr=summary.filter(p=>p.net<-0.005).map(p=>({...p})).sort((a,b)=>a.net-b.net);
+  let ci=0,di=0;while(ci<cr.length&&di<dr.length){const a=Math.min(cr[ci].net,-dr[di].net);settlements.push({from:dr[di].name,to:cr[ci].name,amount:a});cr[ci].net-=a;dr[di].net+=a;if(cr[ci].net<0.005)ci++;if(dr[di].net>-0.005)di++;}
+  const totalBill=payments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  const tripDate=tripDateRange(trip);const slug=trip.name.replace(/[^a-z0-9]/gi,'_').slice(0,30);
+  return{cur,summary,settlements,totalBill,tripDate,slug};
+}
+function execDownload(fmt){
+  const trip=_downloadTripId?trips.find(t=>t.id===_downloadTripId):currentTrip;if(!trip)return;
+  _downloadTripId=null;
+  const{cur,summary,settlements:res,totalBill,tripDate,slug}=computeTripFinancials(trip);
+  if(fmt==='html')_dlHTML(trip,cur,summary,res,totalBill,tripDate,slug);
+  else if(fmt==='pdf')_dlPDF(trip,cur,summary,res,totalBill,tripDate,slug);
+  else if(fmt==='csv')_dlCSV(trip,cur,summary,res,totalBill,tripDate,slug);
+  else if(fmt==='xlsx')_dlXLSX(trip,cur,summary,res,totalBill,tripDate,slug);
+  else if(fmt==='png')_dlPNG(trip,cur,summary,res,totalBill,tripDate,slug);
+  else _dlText(trip,cur,summary,res,totalBill,tripDate,slug);
+}
+function _buildPayGroups(trip){
+  const sorted=[...trip.payments].sort((a,b)=>{const da=a.date||'9999',db=b.date||'9999';return da.localeCompare(db);});
+  const groups=[];const gMap={};sorted.forEach(p=>{const k=p.date||'';if(!gMap[k]){gMap[k]=[];groups.push({key:k,pays:gMap[k]});}gMap[k].push(p);});return groups;
+}
+function _reportHTML(trip,cur,summary,settlements,totalBill,tripDate){
+  const e2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const f2=n=>(parseFloat(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const payGroups=_buildPayGroups(trip);let payRows='';
+  payGroups.forEach(({key,pays})=>{
+    const dt=pays.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+    if(key)payRows+=`<tr style="background:#f1f5f9"><td colspan="5" style="padding:7px 12px;font-size:11px;font-weight:700;color:#64748b">📅 ${formatDateHeader(key)} · ${cur.symbol}${f2(dt)}</td></tr>`;
+    pays.forEach((pay,i)=>{const payer=trip.people.find(p=>p.id===pay.paidBy);const cat=getCatByKey(pay.category||'other',trip);const method=pay.method==='cash'?'💵 Cash':'💳 Card';const sl=pay.splitType==='equal-all'||pay.splitType==='equal'?`All ${trip.people.length}`:pay.splitType==='select'?`${(pay.splitAmong||[]).length} people`:pay.splitType==='percent'?'% Split':'Manual';payRows+=`<tr><td>${e2(pay.label||`Payment ${i+1}`)} <small>${cat.emoji}</small></td><td>${method}</td><td>${e2(payer?.name??'—')}</td><td>${sl}</td><td style="text-align:right;font-weight:700">${cur.symbol}${f2(pay.amount)}</td></tr>`;});
+  });
+  const personRows=summary.map(p=>{const n=p.net;const cl=n>0.005?'color:#16a34a':n<-0.005?'color:#dc2626':'color:#64748b';const lb=n>0.005?`↑ Gets back ${cur.symbol}${f2(Math.abs(n))}`:n<-0.005?`↓ Owes ${cur.symbol}${f2(Math.abs(n))}`:'✅ Settled';return`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;gap:8px"><span style="font-weight:600">${e2(p.name)}</span><span>Paid ${cur.symbol}${f2(p.paid)} · Share ${cur.symbol}${f2(p.owes)}</span><span style="${cl};font-weight:700">${lb}</span></div>`;}).join('');
+  const settleRows=settlements.length===0?`<p style="color:#22c55e;font-weight:700">✅ Everyone is settled!</p>`:settlements.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px"><span style="color:#dc2626;font-weight:700">${e2(s.from)}</span><span style="color:#94a3b8">→</span><span style="background:linear-gradient(135deg,#1e3a8a,#4f46e5);color:#93c5fd;border-radius:6px;padding:2px 8px;font-weight:700;font-size:11px">${cur.symbol}${f2(s.amount)}</span><span style="color:#94a3b8">→</span><span style="color:#16a34a;font-weight:700">${e2(s.to)}</span></div>`).join('');
+  const gen=new Date().toLocaleString();
+  return`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SplitTab — ${e2(trip.name)}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;padding:24px 16px 48px;color:#1e293b}.wrap{max-width:700px;margin:0 auto}.logo{font-size:22px;font-weight:900;margin-bottom:20px;background:linear-gradient(135deg,#4f46e5,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:20px 24px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}.hero{background:linear-gradient(135deg,#1e3a8a,#1e1b4b);border-radius:16px;padding:24px;margin-bottom:16px;color:#fff}.hero-eye{font-size:10px;font-weight:700;letter-spacing:1.5px;color:#93c5fd;text-transform:uppercase;margin-bottom:4px}.hero-title{font-size:26px;font-weight:900;margin-bottom:4px}.hero-desc{font-size:13px;color:#93c5fd;margin-bottom:8px}.stats{display:flex;gap:16px;margin-top:14px}.stat{text-align:center}.stat-val{font-size:22px;font-weight:900}.stat-lbl{font-size:10px;color:#93c5fd;text-transform:uppercase;letter-spacing:.5px}.sec-title{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}table{width:100%;border-collapse:collapse;font-size:12px}thead th{background:#f8fafc;padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0}tbody td{padding:8px 12px;border-bottom:1px solid #f8fafc}thead th:last-child,tbody td:last-child{text-align:right}.footer{text-align:center;color:#94a3b8;font-size:11px;margin-top:8px}@media print{body{padding:0;background:#fff}.card{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid}.no-print{display:none}}</style></head><body><div class="wrap">
+  <div class="logo">💸 SplitTab Report</div>
+  <div class="hero"><div class="hero-eye">Trip Summary</div><div class="hero-title">${e2(trip.name)}</div>${trip.desc?`<div class="hero-desc">${e2(trip.desc)}</div>`:''}<div style="font-size:12px;color:#93c5fd;margin-top:4px">📅 ${e2(tripDate)}</div>${trip.budget>0?`<div style="font-size:12px;color:#93c5fd;margin-top:2px">💰 Budget: ${cur.symbol}${f2(trip.budget)}</div>`:''}
+  <div class="stats"><div class="stat"><div class="stat-val">${cur.symbol}${f2(totalBill)}</div><div class="stat-lbl">Total</div></div><div class="stat"><div class="stat-val">${trip.people.length}</div><div class="stat-lbl">People</div></div><div class="stat"><div class="stat-val">${trip.payments.length}</div><div class="stat-lbl">Payments</div></div></div></div>
+  <div class="card"><div class="sec-title">🧾 All Payments</div><div style="overflow-x:auto"><table><thead><tr><th>Description</th><th>Method</th><th>Paid By</th><th>Split</th><th>Amount</th></tr></thead><tbody>${payRows||`<tr><td colspan="5" style="padding:20px;text-align:center;color:#94a3b8">No payments</td></tr>`}</tbody></table></div></div>
+  <div class="card"><div class="sec-title">👤 Per Person</div>${personRows}</div>
+  <div class="card"><div class="sec-title">💸 Who Pays Who</div>${settleRows}</div>
+  <div class="footer no-print">Generated by SplitTab v1 · ${gen}</div>
+</div></body></html>`;
+}
+function _dlHTML(trip,cur,summary,setts,totalBill,tripDate,slug){const html=_reportHTML(trip,cur,summary,setts,totalBill,tripDate);const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Report.html`;a.click();URL.revokeObjectURL(a.href);toast('HTML report downloaded ✅');}
+function _dlPDF(trip,cur,summary,setts,totalBill,tripDate,slug){const html=_reportHTML(trip,cur,summary,setts,totalBill,tripDate);const win=window.open('','_blank');if(!win){toast('Allow pop-ups to use PDF export');return;}win.document.write(html);win.document.close();win.addEventListener('load',()=>{setTimeout(()=>{win.print();},400);});toast('Opening print dialog — choose "Save as PDF"');}
+function _textBody(trip,cur,summary,setts,totalBill,tripDate){
+  const L='─'.repeat(46);let t='';
+  t+=`TRIP : ${trip.name}\n`;if(trip.desc)t+=`NOTE : ${trip.desc}\n`;
+  t+=`DATE : ${tripDate}\nPEOPLE: ${trip.people.length}  |  PAYMENTS: ${trip.payments.length}  |  TOTAL: ${cur.symbol}${fmtN(totalBill)}\n\n${L}\nPAYMENTS\n${L}\n`;
+  _buildPayGroups(trip).forEach(({key,pays})=>{const dt=pays.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);t+=`\n📅 ${key?formatDateHeader(key):'No date'}\n`;pays.forEach(pay=>{const payer=trip.people.find(p=>p.id===pay.paidBy);const m=pay.method==='cash'?'Cash':'Card';const lb=(pay.label||'Payment').padEnd(22);const am=`${cur.symbol}${fmtN(pay.amount)}`.padStart(10);t+=`  ${lb}${am}  [${m}] ${payer?.name??'—'}\n`;});t+=`  ${''.padEnd(22)}${'─'.repeat(10)}  Day total\n  ${''.padEnd(22)}${(`${cur.symbol}${fmtN(dt)}`).padStart(10)}\n`;});
+  t+=`\n${L}\nBALANCES\n${L}\n\n`;summary.forEach(p=>{const na=Math.abs(p.net);const st=p.net>0.005?`↑ Gets back ${cur.symbol}${fmtN(na)}`:p.net<-0.005?`↓ Owes      ${cur.symbol}${fmtN(na)}`:'✅ Settled';t+=`  ${p.name.padEnd(16)} Paid ${(`${cur.symbol}${fmtN(p.paid)}`).padStart(9)} | Share ${(`${cur.symbol}${fmtN(p.owes)}`).padStart(9)} | ${st}\n`;});
+  t+=`\n${L}\nWHO PAYS WHO\n${L}\n\n`;if(setts.length===0){t+=`  ✅ Everyone is settled!\n`;}else{setts.forEach(s=>{t+=`  ${s.from.padEnd(14)} → ${cur.symbol}${fmtN(s.amount)} → ${s.to}\n`;});}
+  return t;
+}
+function _dlText(trip,cur,summary,setts,totalBill,tripDate,slug){
+  const header=`💸 SPLITTAB REPORT\n${'─'.repeat(46)}\n\n`;
+  const body=_textBody(trip,cur,summary,setts,totalBill,tripDate);
+  const footer=`\n${'─'.repeat(46)}\nGenerated by SplitTab v1 · ${new Date().toLocaleString()}\n`;
+  const blob=new Blob([header+body+footer],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Report.txt`;a.click();URL.revokeObjectURL(a.href);toast('Text report downloaded ✅');
+}
+function _paymentRows(trip){
+  const rows=[['Date','Label','Category','Amount','Method','Paid By','Split Type','Split With']];
+  _buildPayGroups(trip).forEach(({pays})=>{
+    pays.forEach((pay,i)=>{
+      const payer=trip.people.find(p=>p.id===pay.paidBy);
+      const cat=getCatByKey(pay.category||'other',trip);
+      const methodLbl=pay.method==='card'?'Card':'Cash';
+      let typeLbl='Equal',withLbl='All';
+      if(pay.splitType==='select'){
+        typeLbl='Select';
+        withLbl=(pay.splitAmong||[]).map(id=>trip.people.find(p=>p.id===id)?.name).filter(Boolean).join('; ')||'All';
+      }else if(pay.splitType==='percent'){
+        typeLbl='Percent';
+        withLbl=trip.people.map(p=>`${p.name}:${parseFloat((pay.percentages||{})[p.id])||0}%`).join('; ');
+      }else if(pay.splitType==='manual'){
+        typeLbl='Manual';
+        withLbl=Object.entries(pay.customAmounts||{}).map(([id,v])=>{const p=trip.people.find(pp=>pp.id===id);return p?`${p.name}:${(parseFloat(v)||0).toFixed(2)}`:null;}).filter(Boolean).join('; ');
+      }
+      rows.push([pay.date||'',pay.label||`Payment ${i+1}`,cat.label,(parseFloat(pay.amount)||0).toFixed(2),methodLbl,payer?.name||'',typeLbl,withLbl]);
+    });
+  });
+  return rows;
+}
+function _balanceRows(summary){
+  const rows=[['Person','Paid','Share','Net']];
+  summary.forEach(p=>rows.push([p.name,(p.paid||0).toFixed(2),(p.owes||0).toFixed(2),(p.net||0).toFixed(2)]));
+  return rows;
+}
+function _settlementRows(setts){
+  const rows=[['From','To','Amount']];
+  if(setts.length===0)rows.push(['—','Everyone settled','0.00']);
+  else setts.forEach(s=>rows.push([s.from,s.to,(s.amount||0).toFixed(2)]));
+  return rows;
+}
+function _dlCSV(trip,cur,summary,setts,totalBill,tripDate,slug){
+  const rows=[..._paymentRows(trip),[],..._balanceRows(summary),[],..._settlementRows(setts)];
+  const csv='\uFEFF'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Payments.csv`;a.click();URL.revokeObjectURL(a.href);toast('CSV exported ✅');
+}
+function _dlXLSX(trip,cur,summary,setts,totalBill,tripDate,slug){
+  if(typeof XLSX==='undefined'){toast('Excel library failed to load — check your connection');return;}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(_paymentRows(trip)),'Payments');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(_balanceRows(summary)),'Balances');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(_settlementRows(setts)),'Settlements');
+  XLSX.writeFile(wb,`SplitTab_${slug}_Report.xlsx`);
+  toast('Excel report downloaded ✅');
+}
+function _dlPNG(trip,cur,summary,setts,totalBill,tripDate,slug){
+  const W=720,pad=36,rowH=34,headerH=190,gap=26;
+  const peopleH=summary.length*rowH+30;
+  const settH=(setts.length?setts.length*rowH:rowH)+30;
+  const H=headerH+gap+peopleH+gap+settH+50;
+  const canvas=document.createElement('canvas');
+  const scale=2;canvas.width=W*scale;canvas.height=H*scale;
+  const ctx=canvas.getContext('2d');ctx.scale(scale,scale);
+  const FONT='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0f172a');bg.addColorStop(1,'#1e1b4b');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.font=`700 14px ${FONT}`;ctx.fillStyle='#93c5fd';ctx.fillText('💸 SPLITTAB',pad,40);
+  ctx.font=`900 28px ${FONT}`;ctx.fillStyle='#ffffff';ctx.fillText(trip.name,pad,76);
+  ctx.font=`400 13px ${FONT}`;ctx.fillStyle='#93c5fd';ctx.fillText(`📅 ${tripDate}`,pad,100);
+  const stats=[[`${cur.symbol}${fmtN(totalBill)}`,'TOTAL'],[String(trip.people.length),'PEOPLE'],[String(trip.payments.length),'PAYMENTS']];
+  const statW=(W-pad*2)/3,statY=150;
+  stats.forEach((s,i)=>{
+    const x=pad+i*statW;
+    ctx.font=`900 22px ${FONT}`;ctx.fillStyle='#ffffff';ctx.fillText(s[0],x,statY);
+    ctx.font=`700 10px ${FONT}`;ctx.fillStyle='#93c5fd';ctx.fillText(s[1],x,statY+16);
+  });
+  ctx.strokeStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.moveTo(pad,headerH);ctx.lineTo(W-pad,headerH);ctx.stroke();
+  let y=headerH+gap;
+  ctx.font=`700 11px ${FONT}`;ctx.fillStyle='#64748b';ctx.fillText('PER PERSON',pad,y);y+=26;
+  summary.forEach((p,i)=>{
+    ctx.fillStyle=ac(i);ctx.beginPath();ctx.arc(pad+5,y-5,5,0,Math.PI*2);ctx.fill();
+    ctx.font=`600 15px ${FONT}`;ctx.fillStyle='#ffffff';ctx.fillText(p.name,pad+20,y);
+    const n=p.net;
+    const lbl=n>0.005?`↑ Gets back ${cur.symbol}${fmtN(Math.abs(n))}`:n<-0.005?`↓ Owes ${cur.symbol}${fmtN(Math.abs(n))}`:'✅ Settled';
+    ctx.font=`700 13px ${FONT}`;ctx.fillStyle=n>0.005?'#4ade80':n<-0.005?'#f87171':'#94a3b8';
+    ctx.textAlign='right';ctx.fillText(lbl,W-pad,y);ctx.textAlign='left';
+    y+=rowH;
+  });
+  y+=4;ctx.strokeStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();y+=gap;
+  ctx.font=`700 11px ${FONT}`;ctx.fillStyle='#64748b';ctx.fillText('WHO PAYS WHOM',pad,y);y+=26;
+  if(!setts.length){
+    ctx.font=`600 14px ${FONT}`;ctx.fillStyle='#4ade80';ctx.fillText('✅ Everyone is settled!',pad,y);y+=rowH;
+  }else{
+    setts.forEach(s=>{
+      ctx.font=`600 14px ${FONT}`;
+      let x=pad;
+      ctx.fillStyle='#f87171';ctx.fillText(s.from,x,y);x+=ctx.measureText(s.from).width;
+      ctx.fillStyle='#64748b';ctx.fillText('  →  ',x,y);x+=ctx.measureText('  →  ').width;
+      const amtTxt=`${cur.symbol}${fmtN(s.amount)}`;
+      ctx.fillStyle='#fbbf24';ctx.fillText(amtTxt,x,y);x+=ctx.measureText(amtTxt).width;
+      ctx.fillStyle='#64748b';ctx.fillText('  →  ',x,y);x+=ctx.measureText('  →  ').width;
+      ctx.fillStyle='#4ade80';ctx.fillText(s.to,x,y);
+      y+=rowH;
+    });
+  }
+  ctx.font=`400 11px ${FONT}`;ctx.fillStyle='#475569';ctx.textAlign='center';
+  ctx.fillText(`Generated by SplitTab v1 · ${new Date().toLocaleDateString()}`,W/2,H-20);ctx.textAlign='left';
+  canvas.toBlob(blob=>{
+    if(!blob){toast('Could not generate image');return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Summary.png`;a.click();URL.revokeObjectURL(a.href);
+    toast('Image downloaded ✅');
+  },'image/png');
+}
+
+/* ── HELP / HOW-TO-USE GUIDE ── */
+function buildGuideSections(forExport){
+  const C=forExport?{sec:'gsec',tip:'gtip'}:{sec:'guide-sec',tip:'guide-tip'};
+  const sec=(emoji,title,body)=>`<div class="${C.sec}"><h3>${emoji} ${title}</h3>${body}</div>`;
+  return [
+    sec('🚀','Getting Started',`<p>Tap <strong>+ New Trip</strong> on the home screen and give it a name — a date range, description, budget, and currency are optional. Every trip keeps its own people, payments, currency, and budget completely separate from the others (categories are the one exception — see below). Running the same group trip again? Tap 📑 on a trip card to <strong>duplicate</strong> it — the people, currency, and budget carry over, with a clean slate for payments. Need to fix the name, dates, or budget later? Tap the <strong>✏️</strong> icon next to the trip name inside the trip to edit any of those details at any time.</p>`),
+    sec('🌗','Dark &amp; Light Theme',`<p>Tap the <strong>☀️</strong> button in the top-right corner of any screen to toggle between dark mode (the default) and light mode. The button shows ☀️ in dark mode and 🌙 in light mode. Your preference is saved and remembered across sessions, and charts re-render immediately to match the new theme.</p>`),
+    sec('👥','Add People',`<p>Open the <strong>People</strong> tab and tap <strong>+ Add Person</strong> for everyone sharing expenses. Tap a name to rename it — the colored circle next to it stays consistent everywhere: payments, summary, and charts.</p>`),
+    sec('🧾','Adding Payments',`<p>In the <strong>Pay</strong> tab, tap <strong>+ Add Payment</strong>. A new payment opens automatically so you can fill it in right away. To keep the list short, every other payment stays collapsed to a single summary line — tap a row to expand it and edit, tap again (or open another one) to collapse it. Open a payment to find <strong>📋 Duplicate</strong> (handy for repeating costs like a daily breakfast) and <strong>🗑 Delete</strong> — deleting asks for confirmation, and a brief <strong>Undo</strong> button appears for a few seconds right after, in case you change your mind.</p>
+      <p>Above the list, a <strong>🔍 search bar</strong> filters payments in real time by label. Tap <strong>⚙️</strong> to expand the filter panel, which adds two dropdowns: one to filter by the person who paid, and one to filter by category. The search bar and both dropdowns work together simultaneously — a status line below shows how many payments matched the current filters.</p>`),
+    sec('⚖️','Splitting an Expense',`<ul>
+        <li><strong>Select</strong> — choose only the people who were actually part of this expense; the cost is divided evenly among just them.</li>
+        <li><strong>Equal (All)</strong> — split evenly across every person on the trip, regardless of who's involved in this one.</li>
+        <li><strong>Manual</strong> — type an exact amount for each person, for uneven costs.</li>
+        <li><strong>Percent</strong> — assign each person a percentage; they should add up to 100%.</li>
+      </ul>`),
+    sec('🏷️','Categories &amp; Receipts',`<p>Categories are <strong>shared across every trip</strong> — there's one master list, not a separate one per trip. Tap the <strong>🏷️</strong> icon on the trips list (or <strong>🏷️ Categories</strong> in a trip's Pay tab) to open it. A starter set of common categories (Food &amp; Drink, Transport, Hotel, etc.) is ready to go — none are locked. Tap the icon on any row to pick a new one from the icon picker, tap the name to rename it, or tap <strong>×</strong> to delete it (payments using a deleted category move to "Other" in every trip globally, not just the current one). Tap <strong>+ Add Category</strong> to create more — it's instantly available everywhere. While logging a payment, <strong>+ Custom</strong> in the category row adds a new one on the fly without leaving the payment. You can attach a photo of the receipt too — tap the thumbnail any time to view it full-size.</p>`),
+    sec('💱','Currency &amp; Budget',`<p>Tap the currency button in the trip header to switch between currencies — amounts update everywhere instantly. If a budget was set, a progress bar appears both on the trip card on the home screen and in the trip header, turning amber as you approach the limit and red when you exceed it. Both can be updated at any time via the <strong>✏️</strong> edit button.</p>`),
+    sec('📊','Summary &amp; Settling Up',`<p>The <strong>Summary</strong> tab shows the total bill, what each person paid versus their fair share, and a simplified <strong>Who Pays Whom</strong> list — the fewest transactions needed to settle everyone up. When a debt is paid, tap <strong>📝 Record Payment</strong> to log a partial or full amount, add a note (e.g. "UPI"), and set the payment date.</p>
+      <p>Once any amount is recorded, a <strong>progress bar</strong> and payment pills (showing amount · date) appear under that debt, and the button label updates to show the remaining balance — e.g. <em>₹2,500 left</em>. Fully settled debts fade out and show a ✅ badge with the settled date. To start a settlement over, tap <strong>Reset</strong> to clear all recorded payments for that pair.</p>`),
+    sec('📈','Charts',`<p>The <strong>Charts</strong> tab visualizes spending per person, by category, by day, and each person's net balance — everything updates automatically as payments are added.</p>`),
+    sec('📂','Data Manager — Export, Import &amp; Download',`<p>Tap <strong>📂</strong> (top-right on any screen, or the 📂 Data button in the Pay tab) to open the Data Manager. It has three sections:</p>
+      <ul>
+        <li><strong>Import</strong> — restore a JSON backup to bring trips back (on this or another device), or bulk-add payments to the current trip from a <strong>Payments CSV</strong> or <strong>Excel file</strong>. Download a template first for the correct column layout.</li>
+        <li><strong>Download Report</strong> — generate a shareable report as <strong>HTML</strong>, <strong>PDF</strong> (via print dialog), <strong>plain text</strong> (WhatsApp-friendly), <strong>CSV</strong>, a multi-sheet <strong>Excel workbook</strong>, or a <strong>summary image (PNG)</strong>. PNG is only available for a single trip.</li>
+        <li><strong>Export Backup</strong> — save as <strong>JSON</strong> (the format to use for restoring via Import) or <strong>Excel</strong> (human-readable workbook with Trips, Payments, Balances, Settlements &amp; Categories sheets).</li>
+      </ul>
+      <p>For Download and Export, a <strong>scope row</strong> lets you act on <strong>This Trip</strong>, a <strong>Selected</strong> subset (pick from a checklist), or <strong>All Trips</strong> at once.</p>
+      <p>When importing a Payments CSV or Excel file, the only required column is <strong>Amount</strong> — rows with a missing or zero amount are skipped automatically. The <strong>Split With</strong> column encoding varies by split type: use <em>Name1; Name2</em> for Select, <em>Name:40%; Name2:60%</em> for Percent, and <em>Name1:800; Name2:1200</em> for Manual. Unrecognised payer names default to the first person on the trip and are counted in the import summary toast.</p>`),
+    sec('📱','Install as an App',`<p>On Android/Chrome, an install prompt appears automatically. On iPhone, open the Share menu in Safari and choose <strong>Add to Home Screen</strong>. Installed, SplitTab opens full-screen like a native app.</p>`)
+  ].join('')+`<div class="${C.tip}">💡 Tip: Everything is stored only on this device's browser — clearing browser data deletes your trips. Export a JSON backup regularly, especially before switching phones or browsers.</div>`;
+}
+function openGuide(){$('guide-body').innerHTML=buildGuideSections(false);openModal('modal-guide');}
+function downloadGuideHTML(){
+  const css=`*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;padding:28px 18px 48px;color:#1e293b;max-width:680px;margin:0 auto}
+  .glogo{font-size:22px;font-weight:900;margin-bottom:18px;color:#4f46e5}
+  .gsec{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .gsec h3{font-size:15px;margin-bottom:8px;color:#1e1b4b}
+  .gsec p{font-size:13px;color:#475569;line-height:1.7;margin:0}
+  .gsec ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+  .gsec li{font-size:13px;color:#475569;line-height:1.6}
+  .gsec li strong{color:#1e293b}
+  .gtip{background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:11px 15px;font-size:12px;color:#4338ca;line-height:1.6}
+  .gfoot{text-align:center;color:#94a3b8;font-size:11px;margin-top:10px}`;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SplitTab — How to Use</title><style>${css}</style></head><body>
+  <div class="glogo">💸 SplitTab — How to Use</div>
+  ${buildGuideSections(true)}
+  <div class="gfoot">Generated by SplitTab v1 · ${new Date().toLocaleString()}</div>
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SplitTab_How_To_Use.html';a.click();URL.revokeObjectURL(a.href);
+  toast('Guide downloaded ✅');
+}
+
+/* ── CLOSE DROPDOWNS ── */
+document.addEventListener('click',e=>{
+  const dd=$('currency-dropdown');
+  if(dd.classList.contains('open')&&!dd.contains(e.target)&&!$('currency-btn').contains(e.target)){dd.classList.remove('open');}
+  ['modal-new-trip','modal-confirm-delete','modal-confirm-delete-payment','modal-confirm-delete-selected','modal-edit-dates','modal-custom-cat','modal-emoji-picker','modal-settle-record','modal-guide'].forEach(id=>{const m=$(id);if(m.classList.contains('open')&&e.target===m)closeModal(id);});
+});
+
+/* ── PWA ── */
+let _deferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredInstallPrompt=e;showInstallBanner('android');});
+window.addEventListener('appinstalled',()=>{dismissInstallBanner();toast('SplitTab installed! ✅');});
+function showInstallBanner(type){
+  if(localStorage.getItem('splittab_install_dismissed'))return;
+  const banner=$('install-banner'),inst=$('install-btn'),instr=$('install-instructions');
+  if(type==='android'){instr.textContent='Tap Install to add SplitTab to your home screen.';inst.style.display='block';}
+  else if(type==='ios'){instr.innerHTML='Tap the <strong>Share</strong> button in Safari, then <strong>Add to Home Screen</strong>.';inst.style.display='none';}
+  banner.classList.add('visible');
+}
+function dismissInstallBanner(){$('install-banner').classList.remove('visible');localStorage.setItem('splittab_install_dismissed','1');}
+function triggerInstall(){if(!_deferredInstallPrompt)return;_deferredInstallPrompt.prompt();_deferredInstallPrompt.userChoice.then(()=>{_deferredInstallPrompt=null;});}
+function initPWA(){
+  if('serviceWorker'in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+  if(isIOS&&!isStandalone&&!localStorage.getItem('splittab_install_dismissed')){showInstallBanner('ios');}
+}
+
+/* ── RESPONSIVE: redraw charts on resize so canvases match new column widths ── */
+let _resizeT=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(_resizeT);
+  _resizeT=setTimeout(()=>{if(currentTrip&&currentTab==='charts')renderCharts();},150);
+});
+
+/* ── INIT ── */
+async function initApp(){
+  initTheme();initPWA();
+  /* Check existing session */
+  const{data:{session}}=await _sb.auth.getSession();
+  if(session){
+    _currentUser=session.user;
+    await _ensureRow();
+    trips=await loadTrips();
+    categories=await loadCategories();
+    showApp();
+  }else{
+    showAuth();
+  }
+  /* Listen for auth changes (login / logout / token refresh) */
+  _sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session){
+      _currentUser=session.user;
+      await _ensureRow();
+      trips=await loadTrips();
+      categories=await loadCategories();
+      showApp();
+    }else if(event==='SIGNED_OUT'){
+      _currentUser=null;trips=[];categories=[];currentTrip=null;
+      showAuth();
+    }
+  });
+}
+initApp();
+</script>
+</body>
+</html>

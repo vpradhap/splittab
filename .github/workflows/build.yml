@@ -1,0 +1,76 @@
+name: Build SplitTab
+
+on:
+  push:
+    tags:
+      - 'v*'          # triggers on: git tag v2.0.0 && git push --tags
+  workflow_dispatch:  # allows manual trigger from GitHub Actions tab
+
+jobs:
+  # ── Windows .exe ──────────────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install
+      - run: npm run build               # copies index.html → www/
+      - run: npm run electron:build:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SplitTab-Windows
+          path: dist-electron/*.exe
+
+  # ── macOS .dmg ────────────────────────────────────────────────────
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install
+      - run: npm run build
+      - run: npm run electron:build:mac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SplitTab-macOS
+          path: dist-electron/*.dmg
+
+  # ── Android APK ───────────────────────────────────────────────────
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm install
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SplitTab-Android
+          path: android/app/build/outputs/apk/release/*.apk
+
+  # ── NOTE: iOS requires a Mac runner with paid GitHub minutes ──────
+  # Uncomment if you have access to macOS runner with Xcode:
+  #
+  # build-ios:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: '20' }
+  #     - run: npm install
+  #     - run: npm run build
+  #     - run: npx cap sync ios
+  #     - run: xcodebuild -workspace ios/App/App.xcworkspace
+  #              -scheme App -configuration Release
+  #              -archivePath ios/App.xcarchive archive
