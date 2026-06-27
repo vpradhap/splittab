@@ -6,6 +6,10 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# Give Actions permission to upload artifacts only
+permissions:
+  contents: read
+
 jobs:
   # ── Windows .exe ──────────────────────────────────────────────────
   build-windows:
@@ -15,24 +19,25 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
 
-      - name: Copy index.html to www/
-        run: node scripts/build.js
+      - name: Create www folder and copy index.html
+        shell: bash
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
 
       - name: Build Windows exe
-        run: npx electron-builder --win --x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish never
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SplitTab-Windows-exe
-          path: dist-electron/*.exe
+          name: SplitTab-Windows
+          path: dist-electron/**/*.exe
 
   # ── Android APK ───────────────────────────────────────────────────
   build-android:
@@ -42,12 +47,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "22"
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Install dependencies
         run: npm install
