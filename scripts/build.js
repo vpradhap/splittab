@@ -1,5 +1,5 @@
 // scripts/build.js
-// Copies index.html into www/ (the webDir Capacitor + Electron load from)
+// Copies index.html into www/ — the frontendDist Tauri loads from
 const fs   = require('fs');
 const path = require('path');
 

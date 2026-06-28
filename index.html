@@ -8,12 +8,11 @@
 <meta name="apple-mobile-web-app-title" content="SplitTab">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#6366f1">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22SplitTab%22%2C%22short_name%22%3A%22SplitTab%22%2C%22description%22%3A%22Split%20bills%20and%20track%20expenses%20with%20your%20group%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%23111827%22%2C%22theme_color%22%3A%22%236366f1%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%253E%253Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2722%27%20fill%3D%27%25234f46e5%27%2F%253E%253Ctext%20y%3D%2772%27%20x%3D%2712%27%20font-size%3D%2768%27%253E%25F0%259F%2592%25B8%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%234f46e5'/%3E%3Ctext y='72' x='12' font-size='68'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
 <title>SplitTab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -570,7 +569,6 @@ html.light .trip-dates{background:rgba(99,102,241,.1)}
 @media(min-width:1440px){#app{max-width:1400px}}
 
 
-/* ── AUTH SCREEN ── */
 #auth-screen{display:none;position:fixed;inset:0;background:var(--bg1);z-index:9999;align-items:center;justify-content:center;padding:20px;}
 #auth-screen.visible{display:flex;}
 .auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
@@ -591,9 +589,19 @@ html.light .trip-dates{background:rgba(99,102,241,.1)}
 .auth-divider{text-align:center;color:var(--muted);font-size:11px;margin:4px 0 0;}
 #auth-loading{position:fixed;inset:0;background:var(--bg1);z-index:9998;display:flex;align-items:center;justify-content:center;font-size:32px;}
 </style>
+<script>
+/* Load Supabase SDK unless running from file:// (where CDN storage is blocked).
+   If credentials are unconfigured, _isLocalMode catches that in the main script. */
+(function(){
+  if(location.protocol === 'file:') return;
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  s.async = false;
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
-<!-- Loading splash -->
 <div id="auth-loading">💸</div>
 
 <!-- Auth screen -->
@@ -627,7 +635,8 @@ html.light .trip-dates{background:rgba(99,102,241,.1)}
         <button class="icon-btn" title="Categories" onclick="openCategoriesScreen()">🏷️</button>
         <button class="icon-btn" title="How to use" onclick="openGuide()">❓</button>
         <button class="icon-btn" title="Data Manager" onclick="openDataManager()">📂</button>
-        <button class="icon-btn" title="Sign Out" onclick="signOut()">🚪</button>
+        <button class="icon-btn" id="btn-signout" title="Sign Out" onclick="signOut()" style="display:none">🚪</button>
+        <span id="local-mode-badge" style="display:none;font-size:11px;font-weight:600;padding:3px 8px;border-radius:8px;background:var(--bg3);color:var(--muted);border:1px solid var(--border)" title="Running locally — data saved in this browser">💾 Local</span>
       </div>
     </div>
     <div class="trips-list-wrap">
@@ -667,6 +676,7 @@ html.light .trip-dates{background:rgba(99,102,241,.1)}
         <button class="theme-toggle-btn" title="Toggle theme" onclick="toggleTheme()">☀️</button>
         <button class="icon-btn" title="How to use" onclick="openGuide()">❓</button>
         <button class="icon-btn" title="Data Manager" onclick="openDataManager()">📂</button>
+        <button class="icon-btn" title="Sign Out" onclick="signOut()">🚪</button>
       </div>
     </div>
     <div id="currency-dropdown"></div>
@@ -869,15 +879,30 @@ html.light .trip-dates{background:rgba(99,102,241,.1)}
 <input type="file" id="receipt-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleReceiptFile(event)">
 <div id="toast"><span id="toast-msg"></span><button id="toast-action" style="display:none"></button></div>
 <script>
+
 /* ── SUPABASE CONFIG ─────────────────────────────────────────────────
    Replace these two values with your own project credentials.
    Get them from: https://supabase.com → Project Settings → API
+   Leave as-is to run in LOCAL mode (data saved to this browser only).
    ──────────────────────────────────────────────────────────────────── */
 const SUPABASE_URL      = 'https://fsmlaibmhknqeusaekdt.supabase.co/rest/v1/';       // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbWxhaWJtaGtucWV1c2Fla2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDE3ODAsImV4cCI6MjA5Nzk3Nzc4MH0.Tay8lRKAwp56bqMjBho7DQN27vVrngNBp7Pp7Onu1mc';  // starts with "eyJ..."
 
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let _currentUser = null;
+/* ── DUAL-MODE INIT ─────────────────────────────────────────────────
+   LOCAL mode  : file:// origin, placeholder URL, or CDN blocked
+                 → uses localStorage, skips auth screen entirely
+   CLOUD mode  : served over http/https with real Supabase credentials
+                 → uses Supabase auth + cloud sync
+   ──────────────────────────────────────────────────────────────────── */
+const _isLocalMode = (
+  location.protocol === 'file:' ||
+  SUPABASE_URL.startsWith('YOUR_') ||
+  typeof supabase === 'undefined'
+);
+
+const _sb = _isLocalMode ? null : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let _currentUser = _isLocalMode ? {id:'local'} : null;
+let _authMode = 'login';
 
 /* ── HELPERS ── */
 const PALETTE=["#f97316","#8b5cf6","#ec4899","#14b8a6","#f59e0b","#6366f1","#10b981","#ef4444"];
@@ -931,8 +956,8 @@ function allCategories(){return categories;}
 function getCatByKey(key){return categories.find(c=>c.key===key)||{key:'other',label:'Other',emoji:'📦'};}
 
 /* ── STATE ── */
-let trips=[];          // populated async after auth
-let categories=[];     // populated async after auth
+let trips=loadTrips();
+let categories=loadCategories();
 let currentTrip=null;
 let currentTab='people';
 let deletePendingId=null;
@@ -989,94 +1014,38 @@ function formatDateHeader(dateStr){
 }
 
 /* ── PERSISTENCE ── */
-/* ── PERSISTENCE (Supabase cloud) ── */
-async function _ensureRow(){
-  /* Creates the user_data row if it doesn't exist yet */
-  const{data}=await _sb.from('user_data').select('user_id').eq('user_id',_currentUser.id).single();
-  if(!data){await _sb.from('user_data').insert({user_id:_currentUser.id,trips:[],categories:[]});}
-}
 async function loadTrips(){
+  if(_isLocalMode){
+    try{const raw=JSON.parse(localStorage.getItem('splittab_trips')||'[]');return raw.map(migrateTrip);}
+    catch(e){return[];}
+  }
   if(!_currentUser)return[];
   const{data,error}=await _sb.from('user_data').select('trips').eq('user_id',_currentUser.id).single();
   if(error||!data)return[];
   return(data.trips||[]).map(migrateTrip);
 }
+function saveTrips(){
+  if(_isLocalMode){localStorage.setItem('splittab_trips',JSON.stringify(trips));return;}
+  if(!_currentUser)return;
+  _sb.from('user_data').upsert({user_id:_currentUser.id,trips,updated_at:new Date().toISOString()},{onConflict:'user_id'}).catch(console.error);
+}
 async function loadCategories(){
+  if(_isLocalMode){
+    try{const raw=JSON.parse(localStorage.getItem('splittab_categories')||'[]');return raw.length?raw:defaultCategorySeed();}
+    catch(e){return defaultCategorySeed();}
+  }
   if(!_currentUser)return defaultCategorySeed();
   const{data,error}=await _sb.from('user_data').select('categories').eq('user_id',_currentUser.id).single();
   if(error||!data||!(data.categories||[]).length)return defaultCategorySeed();
   return data.categories;
 }
-function saveTrips(){
-  /* Fire-and-forget — no await needed so all existing callers work unchanged */
-  if(!_currentUser)return;
-  _sb.from('user_data').upsert({user_id:_currentUser.id,trips,updated_at:new Date().toISOString()},{onConflict:'user_id'}).catch(console.error);
-}
+
 function saveCategories(){
+  if(_isLocalMode){localStorage.setItem('splittab_categories',JSON.stringify(categories));return;}
   if(!_currentUser)return;
   _sb.from('user_data').upsert({user_id:_currentUser.id,categories,updated_at:new Date().toISOString()},{onConflict:'user_id'}).catch(console.error);
 }
 function getCurrency(){if(!currentTrip)return CURRENCIES[0];return CURRENCIES.find(c=>c.code===currentTrip.currency)||CURRENCIES[0];}
-
-/* ── AUTH UI ── */
-let _authMode='login';
-function setAuthMode(mode){
-  _authMode=mode;
-  $('auth-tab-login').classList.toggle('active',mode==='login');
-  $('auth-tab-signup').classList.toggle('active',mode==='signup');
-  $('auth-password2').style.display=mode==='signup'?'block':'none';
-  $('auth-submit-btn').textContent=mode==='login'?'Sign In':'Create Account';
-  $('auth-err').textContent='';
-}
-async function submitAuth(){
-  const email=($('auth-email').value||'').trim();
-  const pw=$('auth-password').value||'';
-  const pw2=$('auth-password2').value||'';
-  $('auth-err').textContent='';
-  if(!email||!pw){$('auth-err').textContent='Email and password required.';return;}
-  if(_authMode==='signup'&&pw!==pw2){$('auth-err').textContent='Passwords do not match.';return;}
-  if(_authMode==='signup'&&pw.length<8){$('auth-err').textContent='Password must be at least 8 characters.';return;}
-  $('auth-submit-btn').disabled=true;
-  $('auth-submit-btn').textContent='Please wait…';
-  let error;
-  if(_authMode==='login'){
-    ({error}=await _sb.auth.signInWithPassword({email,password:pw}));
-  }else{
-    ({error}=await _sb.auth.signUp({email,password:pw}));
-    if(!error){$('auth-err').style.color='#4ade80';$('auth-err').textContent='Check your email to confirm your account!';$('auth-submit-btn').disabled=false;$('auth-submit-btn').textContent='Create Account';return;}
-  }
-  if(error){$('auth-err').style.color='#f87171';$('auth-err').textContent=error.message;}
-  $('auth-submit-btn').disabled=false;
-  $('auth-submit-btn').textContent=_authMode==='login'?'Sign In':'Create Account';
-}
-async function forgotPassword(){
-  const email=($('auth-email').value||'').trim();
-  if(!email){$('auth-err').style.color='#f87171';$('auth-err').textContent='Enter your email first.';return;}
-  const{error}=await _sb.auth.resetPasswordForEmail(email);
-  $('auth-err').style.color=error?'#f87171':'#4ade80';
-  $('auth-err').textContent=error?error.message:'Reset link sent! Check your email.';
-}
-async function signOut(){
-  await _sb.auth.signOut();
-  trips=[];categories=[];currentTrip=null;
-  showAuth();
-}
-function showAuth(){
-  $('auth-loading').style.display='none';
-  $('auth-screen').classList.add('visible');
-  $('app').style.display='none';
-}
-function showApp(){
-  $('auth-loading').style.display='none';
-  $('auth-screen').classList.remove('visible');
-  $('app').style.display='block';
-  renderTripList();
-}
-/* Attach Enter key to auth fields */
-['auth-email','auth-password','auth-password2'].forEach(id=>{
-  const el=document.getElementById(id);
-  if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
-});
 
 /* ── THEME ── */
 function initTheme(){const t=localStorage.getItem('splittab_theme');if(t==='light')document.documentElement.classList.add('light');updateThemeIcons();}
@@ -2563,7 +2532,7 @@ function _reportHTML(trip,cur,summary,settlements,totalBill,tripDate){
   <div class="card"><div class="sec-title">🧾 All Payments</div><div style="overflow-x:auto"><table><thead><tr><th>Description</th><th>Method</th><th>Paid By</th><th>Split</th><th>Amount</th></tr></thead><tbody>${payRows||`<tr><td colspan="5" style="padding:20px;text-align:center;color:#94a3b8">No payments</td></tr>`}</tbody></table></div></div>
   <div class="card"><div class="sec-title">👤 Per Person</div>${personRows}</div>
   <div class="card"><div class="sec-title">💸 Who Pays Who</div>${settleRows}</div>
-  <div class="footer no-print">Generated by SplitTab v1 · ${gen}</div>
+  <div class="footer no-print">Generated by SplitTab v2 · ${gen}</div>
 </div></body></html>`;
 }
 function _dlHTML(trip,cur,summary,setts,totalBill,tripDate,slug){const html=_reportHTML(trip,cur,summary,setts,totalBill,tripDate);const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Report.html`;a.click();URL.revokeObjectURL(a.href);toast('HTML report downloaded ✅');}
@@ -2580,7 +2549,7 @@ function _textBody(trip,cur,summary,setts,totalBill,tripDate){
 function _dlText(trip,cur,summary,setts,totalBill,tripDate,slug){
   const header=`💸 SPLITTAB REPORT\n${'─'.repeat(46)}\n\n`;
   const body=_textBody(trip,cur,summary,setts,totalBill,tripDate);
-  const footer=`\n${'─'.repeat(46)}\nGenerated by SplitTab v1 · ${new Date().toLocaleString()}\n`;
+  const footer=`\n${'─'.repeat(46)}\nGenerated by SplitTab v2 · ${new Date().toLocaleString()}\n`;
   const blob=new Blob([header+body+footer],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Report.txt`;a.click();URL.revokeObjectURL(a.href);toast('Text report downloaded ✅');
 }
 function _paymentRows(trip){
@@ -2682,7 +2651,7 @@ function _dlPNG(trip,cur,summary,setts,totalBill,tripDate,slug){
     });
   }
   ctx.font=`400 11px ${FONT}`;ctx.fillStyle='#475569';ctx.textAlign='center';
-  ctx.fillText(`Generated by SplitTab v1 · ${new Date().toLocaleDateString()}`,W/2,H-20);ctx.textAlign='left';
+  ctx.fillText(`Generated by SplitTab v2 · ${new Date().toLocaleDateString()}`,W/2,H-20);ctx.textAlign='left';
   canvas.toBlob(blob=>{
     if(!blob){toast('Could not generate image');return;}
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SplitTab_${slug}_Summary.png`;a.click();URL.revokeObjectURL(a.href);
@@ -2737,7 +2706,7 @@ function downloadGuideHTML(){
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SplitTab — How to Use</title><style>${css}</style></head><body>
   <div class="glogo">💸 SplitTab — How to Use</div>
   ${buildGuideSections(true)}
-  <div class="gfoot">Generated by SplitTab v1 · ${new Date().toLocaleString()}</div>
+  <div class="gfoot">Generated by SplitTab v2 · ${new Date().toLocaleString()}</div>
   </body></html>`;
   const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SplitTab_How_To_Use.html';a.click();URL.revokeObjectURL(a.href);
   toast('Guide downloaded ✅');
@@ -2777,27 +2746,99 @@ window.addEventListener('resize',()=>{
   _resizeT=setTimeout(()=>{if(currentTrip&&currentTab==='charts')renderCharts();},150);
 });
 
-/* ── INIT ── */
+
+/* ── AUTH ── */
+async function _ensureRow(){
+  if(_isLocalMode)return; /* no-op in local mode */
+  const{data}=await _sb.from('user_data').select('user_id').eq('user_id',_currentUser.id).single();
+  if(!data){await _sb.from('user_data').insert({user_id:_currentUser.id,trips:[],categories:[]});}
+}
+function setAuthMode(mode){
+  _authMode=mode;
+  $('auth-tab-login').classList.toggle('active',mode==='login');
+  $('auth-tab-signup').classList.toggle('active',mode==='signup');
+  $('auth-password2').style.display=mode==='signup'?'block':'none';
+  $('auth-submit-btn').textContent=mode==='login'?'Sign In':'Create Account';
+  $('auth-err').textContent='';
+}
+function showApp(){
+  $('auth-loading').style.display='none';
+  $('auth-screen').classList.remove('visible');
+  $('app').style.display='block';
+  renderTripList();
+}
+function showAuth(){
+  $('auth-loading').style.display='none';
+  $('auth-screen').classList.add('visible');
+  $('app').style.display='none';
+}
+async function signOut(){
+  if(_isLocalMode){trips=[];categories=[];currentTrip=null;location.reload();return;}
+  await _sb.auth.signOut();
+  trips=[];categories=[];currentTrip=null;
+  showAuth();
+}
+async function submitAuth(){
+  const email=($('auth-email').value||'').trim();
+  const pw=$('auth-password').value||'';
+  const pw2=$('auth-password2').value||'';
+  $('auth-err').textContent='';
+  if(!email||!pw){$('auth-err').textContent='Email and password required.';return;}
+  if(_authMode==='signup'&&pw!==pw2){$('auth-err').textContent='Passwords do not match.';return;}
+  if(_authMode==='signup'&&pw.length<8){$('auth-err').textContent='Password must be at least 8 characters.';return;}
+  $('auth-submit-btn').disabled=true;
+  $('auth-submit-btn').textContent='Please wait…';
+  let error;
+  if(_authMode==='login'){
+    ({error}=await _sb.auth.signInWithPassword({email,password:pw}));
+  }else{
+    ({error}=await _sb.auth.signUp({email,password:pw}));
+    if(!error){$('auth-err').style.color='#4ade80';$('auth-err').textContent='Check your email to confirm your account!';$('auth-submit-btn').disabled=false;$('auth-submit-btn').textContent='Create Account';return;}
+  }
+  if(error){$('auth-err').style.color='#f87171';$('auth-err').textContent=error.message;}
+  $('auth-submit-btn').disabled=false;
+  $('auth-submit-btn').textContent=_authMode==='login'?'Sign In':'Create Account';
+}
+async function forgotPassword(){
+  const email=($('auth-email').value||'').trim();
+  if(!email){$('auth-err').style.color='#f87171';$('auth-err').textContent='Enter your email first.';return;}
+  const{error}=await _sb.auth.resetPasswordForEmail(email);
+  $('auth-err').style.color=error?'#f87171':'#4ade80';
+  $('auth-err').textContent=error?error.message:'Reset link sent! Check your email.';
+}
 async function initApp(){
   initTheme();initPWA();
-  /* Check existing session */
+  if(_isLocalMode){
+    /* LOCAL mode: skip auth, load from localStorage and go straight to app */
+    trips=await loadTrips();
+    categories=await loadCategories();
+    $('auth-loading').style.display='none';
+    $('app').style.display='block';
+    /* Show local badge, hide sign-out (no account in local mode) */
+    if($('btn-signout'))$('btn-signout').style.display='none';
+    if($('local-mode-badge'))$('local-mode-badge').style.display='';
+    renderTripList();
+    return;
+  }
+  /* CLOUD mode: check Supabase session */
   const{data:{session}}=await _sb.auth.getSession();
   if(session){
     _currentUser=session.user;
     await _ensureRow();
     trips=await loadTrips();
     categories=await loadCategories();
+    if($('btn-signout'))$('btn-signout').style.display='';
     showApp();
   }else{
     showAuth();
   }
-  /* Listen for auth changes (login / logout / token refresh) */
   _sb.auth.onAuthStateChange(async(event,session)=>{
     if(event==='SIGNED_IN'&&session){
       _currentUser=session.user;
       await _ensureRow();
       trips=await loadTrips();
       categories=await loadCategories();
+      if($('btn-signout'))$('btn-signout').style.display='';
       showApp();
     }else if(event==='SIGNED_OUT'){
       _currentUser=null;trips=[];categories=[];currentTrip=null;
@@ -2805,6 +2846,8 @@ async function initApp(){
     }
   });
 }
+
+/* ── INIT ── */
 initApp();
 </script>
 </body>

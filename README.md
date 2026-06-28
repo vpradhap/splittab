@@ -1,189 +1,118 @@
-# 💸 SplitTab v2 — Setup Guide
+# 💸 SplitTab
 
-> Bill splitting app with cloud sync, email auth, and native app builds (Android, iOS, Windows, Mac)
-
----
-
-## 📋 What's in this repo
-
-```
-SplitTab/
-├── index.html              ← Main app (edit SUPABASE_URL + SUPABASE_ANON_KEY here)
-├── www/                    ← Built output (auto-generated, don't edit)
-├── supabase/
-│   └── schema.sql          ← Run once to set up your database
-├── electron/
-│   └── main.js             ← Desktop app entry point
-├── scripts/
-│   └── build.js            ← Build step (copies index.html → www/)
-├── capacitor.config.json   ← Mobile app config
-├── package.json
-└── .github/workflows/
-    └── build.yml           ← Auto-build exe/apk on GitHub push
-```
+Split bills with your group. Cloud sync via Supabase. Ships as Web, Windows EXE, and Android APK.
 
 ---
 
-## 🌐 OPTION A — Supabase Cloud (Free, no server needed)
+## Stack
 
-### Step 1 — Create Supabase project
-1. Go to [supabase.com](https://supabase.com) → **New Project**
-2. Choose a name, region, and strong database password → **Create**
-3. Wait ~2 minutes for setup
+| Layer | Tool | Why |
+|---|---|---|
+| Web | Plain HTML + GitHub Pages | Zero build, free hosting |
+| Desktop (Windows) | **Tauri v2** | ~5 MB installer vs Electron's ~150 MB |
+| Mobile (Android) | **PWABuilder / Bubblewrap** | Wraps live PWA as TWA — no Android Studio or Gradle needed |
+| iOS | PWA (Add to Home Screen) | Safari → Share → Add to Home Screen |
+| Database | Supabase | Free tier, real-time, auth built-in |
 
-### Step 2 — Set up the database
-1. In your Supabase project → **SQL Editor** → **New Query**
-2. Paste the contents of `supabase/schema.sql`
-3. Click **Run**
+---
 
-### Step 3 — Configure auth
-1. **Authentication → Providers → Email** → make sure it's **enabled**
-2. For development: uncheck **"Confirm email"** so users can log in immediately
-3. For production: leave it checked (sends a confirmation email)
-4. **Authentication → URL Configuration** → set **Site URL** to your hosted URL
+## Quick Start (Web only)
 
-### Step 4 — Get your API keys
-1. **Project Settings → API**
-2. Copy:
-   - **Project URL** (e.g. `https://abcdefgh.supabase.co`)
-   - **anon / public key** (starts with `eyJ...`)
+1. Go to `supabase.com` → create a project called `splittab`
+2. Run `supabase/schema.sql` in the SQL Editor
+3. Copy your **Project URL** and **anon key** from Project Settings → API
+4. Open `index.html`, find the top of the `<script>` block, and replace:
 
-### Step 5 — Add keys to index.html
-Open `index.html`, find lines near the top of `<script>`:
 ```js
 const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 ```
-Replace with your actual values.
 
-### Step 6 — Host the HTML
-Pick any free host — drag & drop `index.html`:
-- **Netlify**: [netlify.com](https://netlify.com) → **Add new site → Deploy manually** → drag file
-- **Vercel**: `npx vercel` in this folder
-- **GitHub Pages**: push to repo → Settings → Pages → Deploy from branch
+5. Push to GitHub, enable GitHub Pages → live at `https://vpradhap.github.io/splittab`
 
 ---
 
-## 🐳 OPTION B — Self-Hosted Supabase (Docker, your own server)
+## Building the Windows installer
 
-### Prerequisites
-- A Linux server (VPS, home server, etc.)
-- Docker + Docker Compose installed
+Push a tag to trigger GitHub Actions:
 
-### Step 1 — Clone Supabase
 ```bash
-git clone --depth 1 https://github.com/supabase/supabase
-cd supabase/docker
-cp .env.example .env
+git tag v1.0.0
+git push origin main --tags
 ```
 
-### Step 2 — Configure .env
-Edit `.env` — the critical fields:
-```env
-POSTGRES_PASSWORD=your-super-secret-db-password
-JWT_SECRET=your-super-secret-jwt-secret-at-least-32-chars
-ANON_KEY=          # generate at: https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys
-SERVICE_ROLE_KEY=  # same tool
-SITE_URL=https://your-domain.com
-```
-> Generate ANON_KEY and SERVICE_ROLE_KEY using the JWT tool at the link above — paste your JWT_SECRET in.
+Actions → completed run → Artifacts → **SplitTab-Windows**
 
-### Step 3 — Start Supabase
+Contains two installer types:
+- `SplitTab_1.0.0_x64-setup.exe` — NSIS wizard installer (Next → Install → Finish)
+- `SplitTab_1.0.0_x64_en-US.msi` — Windows Installer (.msi) wizard
+
+**WebView2 note**: Required at runtime. Pre-installed on all Windows 11 machines and Windows 10 machines updated since late 2020. If missing, the installer will automatically download it (controlled by `"webviewInstallMode": "downloadBootstrapper"` in `tauri.conf.json`).
+
+---
+
+## Building the Android APK (one-time setup)
+
+The Android job wraps your live GitHub Pages URL as a TWA (Trusted Web Activity) — a full-screen Chrome-based app. No Gradle project, no Android Studio.
+
+### Step 1 — Generate your signing key (local, one time)
+
 ```bash
-docker compose up -d
+npx @bubblewrap/cli init \
+  --manifest https://vpradhap.github.io/splittab/manifest.json \
+  --directory ./twa
 ```
-Supabase Studio will be at `http://your-server-ip:8000`
 
-### Step 4 — Set up the database
-- Open Studio → SQL Editor → paste `supabase/schema.sql` → Run
+Note the **SHA256 fingerprint** printed at the end.
 
-### Step 5 — Add keys to index.html
-Your self-hosted keys:
-```js
-const SUPABASE_URL      = 'http://your-server-ip:8000';
-const SUPABASE_ANON_KEY = 'your-generated-anon-key';
+### Step 2 — Update assetlinks.json
+
+Paste your SHA256 fingerprint into `.well-known/assetlinks.json`, replacing the placeholder. Commit and push.
+
+### Step 3 — Add GitHub Secrets
+
+| Secret name | Value |
+|---|---|
+| `KEYSTORE_BASE64` | `base64 -w0 android.keystore` output |
+| `KEYSTORE_PASSWORD` | the password you chose during init |
+
+### Step 4 — Push a tag
+
+Same as Windows — the same `git tag` + `git push --tags` triggers both jobs.
+
+### Alternative: skip CI, use pwabuilder.com
+
+Visit **pwabuilder.com**, paste `https://vpradhap.github.io/splittab`, click **Package for stores → Android**. Download the APK in ~30 seconds with no setup.
+
+---
+
+## Project structure
+
+```
+splittab/
+├── index.html                  ← entire app (HTML + CSS + JS)
+├── manifest.json               ← PWA manifest
+├── .well-known/
+│   └── assetlinks.json         ← TWA domain association (Android)
+├── supabase/
+│   └── schema.sql              ← DB schema (run once in Supabase SQL Editor)
+├── src-tauri/                  ← Tauri desktop shell
+│   ├── tauri.conf.json         ← window size, installer targets
+│   ├── Cargo.toml
+│   ├── build.rs
+│   └── src/
+│       ├── main.rs
+│       └── lib.rs
+├── scripts/
+│   └── build.js                ← copies index.html → www/
+├── .github/workflows/
+│   └── build.yml               ← CI: Tauri (Windows) + Bubblewrap (Android)
+├── package.json
+└── .gitignore
 ```
 
 ---
 
-## 📱 Building native apps (Android APK / iOS / Windows exe)
+## License
 
-### One-time setup
-```bash
-npm install
-npm run build          # copies index.html → www/
-```
-
-### Android APK
-```bash
-npm run cap:add:android      # first time only
-npm run cap:sync
-npm run cap:open:android     # opens Android Studio
-```
-In Android Studio: **Build → Generate Signed APK** or **Build → Build Bundle**
-
-> **Requirements**: Android Studio + Android SDK installed
-
-### iOS (Mac only)
-```bash
-npm run cap:add:ios          # first time only
-npm run cap:sync
-npm run cap:open:ios         # opens Xcode
-```
-In Xcode: **Product → Archive** → upload to App Store or export IPA
-
-> **Requirements**: Mac + Xcode + Apple Developer account ($99/yr for App Store)
-
-### Windows .exe
-```bash
-npm run electron:build:win
-```
-Output: `dist-electron/SplitTab Setup.exe`
-
-### macOS .dmg
-```bash
-npm run electron:build:mac
-```
-Output: `dist-electron/SplitTab.dmg`
-
----
-
-## 🤖 Automated builds via GitHub Actions
-
-Push your code to GitHub, then:
-```bash
-git tag v2.0.0
-git push --tags
-```
-GitHub Actions will automatically build Windows `.exe` and Android `.apk` and make them available as downloadable artifacts under **Actions → your workflow run → Artifacts**.
-
----
-
-## 🔄 Migrating existing local data
-
-If you used the old single-file SplitTab and have data in localStorage:
-1. Open the old HTML file in your browser
-2. Open DevTools → Console, paste:
-```js
-const data = {
-  trips: localStorage.getItem('splittab_trips'),
-  categories: localStorage.getItem('splittab_categories')
-};
-console.log(JSON.stringify(data));
-```
-3. Copy the output
-4. Log into the new SplitTab → DevTools → Console, paste:
-```js
-const data = /* paste output */;
-if(data.trips) localStorage.setItem('splittab_trips', data.trips);
-```
-Then use the **📂 Data Manager** → Import to load it into your cloud account.
-
----
-
-## 🛡️ Security notes
-
-- Each user's data is protected by **Row Level Security** — no user can read another's data
-- The `anon` key in the HTML is safe to be public — it has zero permissions without a valid user JWT
-- For production, enable email confirmation in Supabase Auth settings
-- Consider setting up a **custom SMTP provider** in Supabase for reliable email delivery
+MIT · github.com/vpradhap/splittab

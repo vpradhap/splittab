@@ -2,35 +2,17 @@
   "name": "splittab",
   "version": "1.0.0",
   "description": "SplitTab — Bill splitting app with cloud sync",
-  "main": "electron/main.js",
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "tauri": "tauri"
   },
   "keywords": [],
   "author": "vpradhap",
   "license": "MIT",
   "devDependencies": {
-    "@capacitor/cli": "^6.0.0",
-    "electron": "^31.0.0",
-    "electron-builder": "^24.0.0"
+    "@tauri-apps/cli": "^2"
   },
   "dependencies": {
-    "@capacitor/android": "^6.0.0",
-    "@capacitor/core": "^6.0.0",
-    "@capacitor/ios": "^6.0.0"
-  },
-  "build": {
-    "appId": "com.vpradhap.splittab",
-    "productName": "SplitTab",
-    "directories": {
-      "output": "dist-electron"
-    },
-    "files": [
-      "www/**/*",
-      "electron/**/*"
-    ],
-    "win": {
-      "target": "portable"
-    }
+    "@tauri-apps/api": "^2"
   }
 }
