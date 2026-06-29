@@ -589,17 +589,7 @@ html.light .trip-dates{background:rgba(99,102,241,.1)}
 .auth-divider{text-align:center;color:var(--muted);font-size:11px;margin:4px 0 0;}
 #auth-loading{position:fixed;inset:0;background:var(--bg1);z-index:9998;display:flex;align-items:center;justify-content:center;font-size:32px;}
 </style>
-<script>
-/* Load Supabase SDK unless running from file:// (where CDN storage is blocked).
-   If credentials are unconfigured, _isLocalMode catches that in the main script. */
-(function(){
-  if(location.protocol === 'file:') return;
-  const s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-  s.async = false;
-  document.head.appendChild(s);
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="auth-loading">💸</div>
@@ -896,8 +886,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
    ──────────────────────────────────────────────────────────────────── */
 const _isLocalMode = (
   location.protocol === 'file:' ||
-  SUPABASE_URL.startsWith('YOUR_') ||
-  typeof supabase === 'undefined'
+  SUPABASE_URL.startsWith('YOUR_')
 );
 
 const _sb = _isLocalMode ? null : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

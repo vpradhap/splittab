@@ -9,6 +9,16 @@ dist-tauri/
 # Tauri dev artifacts
 src-tauri/target/
 
+# Bubblewrap build output (not the config — twa-manifest.json IS committed)
+twa/
+android/
+ios/
+
+# Keystore — NEVER commit this
+android.keystore
+*.keystore
+*.jks
+
 # Environment & secrets
 .env
 .env.local

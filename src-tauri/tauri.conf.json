@@ -37,15 +37,6 @@
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       }
-    },
-    "nsis": {
-      "installMode": "currentUser",
-      "installerIcon": "icons/icon.ico",
-      "installerSidebar": null,
-      "displayLanguageSelector": false
-    },
-    "wix": {
-      "language": "en-US"
     }
   }
 }

@@ -7,10 +7,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # needed for tauri-action to create GitHub releases
+  contents: write
 
 jobs:
-  # ── Windows EXE + MSI installer (Tauri) ───────────────────────────
+
+  # ── Windows installer via Tauri v2 ────────────────────────────────
   build-windows:
     runs-on: windows-latest
     steps:
@@ -20,11 +21,9 @@ jobs:
         with:
           node-version: "22"
 
-      # Rust toolchain is required for Tauri
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      # Cache Rust build artifacts — speeds up subsequent runs from ~8 min → ~2 min
       - name: Cache Rust
         uses: swatinem/rust-cache@v2
         with:
@@ -33,12 +32,9 @@ jobs:
       - name: Install Node dependencies
         run: npm install
 
-      # Copy index.html → www/index.html (frontendDist Tauri loads)
       - name: Prepare frontend
         run: node scripts/build.js
 
-      # tauri-action builds both .msi (install wizard) and .exe (NSIS installer)
-      # Outputs go to: src-tauri/target/release/bundle/
       - name: Build with Tauri
         uses: tauri-apps/tauri-action@v0
         env:
@@ -46,7 +42,6 @@ jobs:
         with:
           tauriScript: npx tauri
 
-      # Upload both installer types as one artifact
       - name: Upload Windows installers
         uses: actions/upload-artifact@v4
         with:
@@ -55,20 +50,19 @@ jobs:
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
 
-  # ── Android TWA APK (Bubblewrap / PWABuilder) ─────────────────────
-  # Wraps your live GitHub Pages URL as a native Android app (TWA).
-  # No Android Studio or Gradle project needed — bubblewrap handles everything.
+  # ── Android TWA APK via Bubblewrap ───────────────────────────────
+  # Uses pre-built twa-manifest.json — no interactive init needed.
   #
-  # ONE-TIME SETUP before this job works:
-  #   1. Run locally: npx @bubblewrap/cli init --manifest https://vpradhap.github.io/splittab/manifest.json
-  #   2. This generates a signing key → note the SHA256 fingerprint it prints
-  #   3. Paste that fingerprint into .well-known/assetlinks.json
-  #   4. Commit assetlinks.json and push — GitHub Pages will serve it
-  #   5. Store the key password in GitHub Secrets as KEYSTORE_PASSWORD
-  #   6. Store the base64-encoded keystore file as KEYSTORE_BASE64:
-  #        base64 -w0 android.keystore > keystore.b64
-  #        (copy the contents into the secret)
-  # ─────────────────────────────────────────────────────────────────────
+  # ONE-TIME LOCAL SETUP before this job works:
+  #   1. npx @bubblewrap/cli init --manifest https://vpradhap.github.io/splittab/manifest.json
+  #      → note the SHA-256 fingerprint printed at the end
+  #      → this creates android.keystore in your folder
+  #   2. Paste fingerprint into .well-known/assetlinks.json
+  #   3. Push assetlinks.json to GitHub (Pages must redeploy)
+  #   4. Add GitHub Secrets:
+  #      KEYSTORE_BASE64  → base64 of android.keystore
+  #      KEYSTORE_PASSWORD → your keystore password
+  # ──────────────────────────────────────────────────────────────────
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -86,37 +80,27 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      # Restore signing keystore from secret
       - name: Restore keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
 
-      # Init TWA project pointing at the live GitHub Pages URL
-      - name: Init TWA project
+      # Inject real keystore password into twa-manifest.json
+      - name: Configure keystore password
         run: |
-          bubblewrap init \
-            --manifest https://vpradhap.github.io/splittab/manifest.json \
-            --directory ./twa \
-            --skipPwaValidation
-        env:
-          BUBBLEWRAP_KEYSTORE_PATH: ${{ github.workspace }}/android.keystore
-          BUBBLEWRAP_KEY_ALIAS: splittab
-          BUBBLEWRAP_KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          sed -i 's/KEYSTORE_PASS/${{ secrets.KEYSTORE_PASSWORD }}/g' twa-manifest.json
 
-      # Build the signed APK
-      - name: Build APK
+      # bubblewrap build reads twa-manifest.json — no interactive init needed
+      - name: Build TWA APK
         run: |
-          cd twa
           bubblewrap build \
+            --manifest twa-manifest.json \
             --skipPwaValidation
         env:
-          BUBBLEWRAP_KEYSTORE_PATH: ${{ github.workspace }}/android.keystore
-          BUBBLEWRAP_KEY_ALIAS: splittab
-          BUBBLEWRAP_KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: SplitTab-Android
-          path: twa/app-release-signed.apk
+          path: |
+            app-release-signed.apk
+            app-release.apk
