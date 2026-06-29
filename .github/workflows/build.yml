@@ -51,18 +51,6 @@ jobs:
             src-tauri/target/release/bundle/nsis/*.exe
 
   # ── Android TWA APK via Bubblewrap ───────────────────────────────
-  # Uses pre-built twa-manifest.json — no interactive init needed.
-  #
-  # ONE-TIME LOCAL SETUP before this job works:
-  #   1. npx @bubblewrap/cli init --manifest https://vpradhap.github.io/splittab/manifest.json
-  #      → note the SHA-256 fingerprint printed at the end
-  #      → this creates android.keystore in your folder
-  #   2. Paste fingerprint into .well-known/assetlinks.json
-  #   3. Push assetlinks.json to GitHub (Pages must redeploy)
-  #   4. Add GitHub Secrets:
-  #      KEYSTORE_BASE64  → base64 of android.keystore
-  #      KEYSTORE_PASSWORD → your keystore password
-  # ──────────────────────────────────────────────────────────────────
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -83,17 +71,13 @@ jobs:
       - name: Restore keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
 
-      # Inject real keystore password into twa-manifest.json
       - name: Configure keystore password
-        run: |
-          sed -i 's/KEYSTORE_PASS/${{ secrets.KEYSTORE_PASSWORD }}/g' twa-manifest.json
+        run: sed -i 's/KEYSTORE_PASS/${{ secrets.KEYSTORE_PASSWORD }}/g' twa-manifest.json
 
-      # bubblewrap build reads twa-manifest.json — no interactive init needed
+      # bubblewrap always asks "Do you want Bubblewrap to install the JDK?"
+      # even on `build`. Pipe "No" so it uses the system JDK from setup-java above.
       - name: Build TWA APK
-        run: |
-          bubblewrap build \
-            --manifest twa-manifest.json \
-            --skipPwaValidation
+        run: echo "No" | bubblewrap build --skipPwaValidation
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
