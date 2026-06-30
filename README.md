@@ -51,41 +51,46 @@ Contains two installer types:
 
 ---
 
-## Building the Android APK (one-time setup)
+## Building the Android APK (100% GitHub Actions — no local commands)
 
-The Android job wraps your live GitHub Pages URL as a TWA (Trusted Web Activity) — a full-screen Chrome-based app. No Gradle project, no Android Studio.
+**Why this is different:** bubblewrap's password prompts require a real terminal (TTY) and cannot be automated in any CI system — that's a hard limitation, not a config issue. So this project doesn't use bubblewrap at all for Android. Instead, `android-twa/` is a small, hand-authored Android project using Google's official `androidbrowserhelper` TWA library — the same library bubblewrap generates code around, just without the broken interactive wrapper. It's already included in this zip. You never run anything locally.
 
-### Step 1 — Generate your signing key (local, one time)
+### Step 1 — Generate your signing keystore (GitHub Actions, one-time)
 
-```bash
-npx @bubblewrap/cli init \
-  --manifest https://vpradhap.github.io/splittab/manifest.json \
-  --directory ./twa
-```
+1. Push/commit this repo to GitHub first (web UI commit is fine — see GitHub's "Upload files" button if you don't want a local terminal at all).
+2. Go to your repo → **Actions** tab → select **"Generate Android Keystore (run ONCE)"** in the left sidebar → **Run workflow**.
+3. Type a password of your choice in the input box → **Run workflow**.
+4. Wait ~30 seconds, then click into the completed run → expand **"Show SHA-256 fingerprint"** and **"Base64-encode keystore"** steps → copy both values shown.
 
-Note the **SHA256 fingerprint** printed at the end.
+Run this workflow **exactly once**. Re-running it generates a *different* key, which would break future app updates on anyone's phone.
 
-### Step 2 — Update assetlinks.json
+### Step 2 — Add GitHub Secrets
 
-Paste your SHA256 fingerprint into `.well-known/assetlinks.json`, replacing the placeholder. Commit and push.
-
-### Step 3 — Add GitHub Secrets
+Repo → **Settings → Secrets and variables → Actions → New repository secret**
 
 | Secret name | Value |
 |---|---|
-| `KEYSTORE_BASE64` | `base64 -w0 android.keystore` output |
-| `KEYSTORE_PASSWORD` | the password you chose during init |
+| `KEYSTORE_BASE64` | The long base64 block copied from Step 1 |
+| `KEYSTORE_PASSWORD` | The password you typed into the workflow input in Step 1 |
 
-### Step 4 — Push a tag
+### Step 3 — Update assetlinks.json (via GitHub web editor)
 
-Same as Windows — the same `git tag` + `git push --tags` triggers both jobs.
+1. In your repo, navigate to `.well-known/assetlinks.json`.
+2. Click the pencil (✏️) **Edit** icon — this opens GitHub's web-based file editor, no local tools needed.
+3. Replace `REPLACE_WITH_YOUR_SHA256_CERT_FINGERPRINT` with the SHA-256 fingerprint from Step 1.
+4. Click **Commit changes** directly in the browser.
 
-### Alternative: skip CI, use pwabuilder.com
+### Step 4 — Trigger the build
 
-Visit **pwabuilder.com**, paste `https://vpradhap.github.io/splittab`, click **Package for stores → Android**. Download the APK in ~30 seconds with no setup.
+Repo → **Actions** tab → **"Build SplitTab"** workflow → **Run workflow** (or push a tag the normal way if you do use git). This builds both the Windows EXE and Android APK using your stored secrets — fully automated from here on.
 
----
+### Updating the app later
 
+You never need to repeat Steps 1–3. For any future code change, just trigger **Build SplitTab** again — the same keystore signs every release automatically.
+
+### Alternative: skip all of this, use pwabuilder.com
+
+Visit **pwabuilder.com**, paste `https://vpradhap.github.io/splittab`, click **Package for stores → Android**. Download a signed APK in ~30 seconds, zero setup, zero CI, zero GitHub Secrets.
 ## Project structure
 
 ```

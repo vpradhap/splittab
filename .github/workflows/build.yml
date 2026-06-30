@@ -50,15 +50,16 @@ jobs:
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
 
-  # ── Android TWA APK via Bubblewrap ───────────────────────────────
+  # ── Android APK — hand-built TWA project, built with Gradle directly ──
+  # No bubblewrap CLI involved at all (its password prompts can't work in
+  # CI — they require a real TTY). android-twa/ is a plain, hand-authored
+  # Android project using Google's official androidbrowserhelper library.
+  # gradle/actions/setup-gradle installs Gradle itself, so no gradlew
+  # wrapper jar needs to be committed to the repo.
   build-android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -66,54 +67,28 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # ubuntu-latest's pre-installed Android SDK is unreliable/missing for
-      # bubblewrap's validation. Install a known-good SDK explicitly instead.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
       - name: Restore keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
 
-      # Pre-write bubblewrap's config so it never prompts for JDK/SDK paths.
-      - name: Pre-configure Bubblewrap (skip JDK/SDK prompts)
+      # Gradle's own official non-interactive signing override — zero
+      # prompts, works in any CI, no bubblewrap/inquirer involved.
+      - name: Build APK with Gradle
+        working-directory: android-twa
         run: |
-          echo "JAVA_HOME = $JAVA_HOME"
-          echo "ANDROID_HOME = $ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT = $ANDROID_SDK_ROOT"
-          mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json << EOF
-          {
-            "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "$ANDROID_HOME"
-          }
-          EOF
-          echo "── Bubblewrap config ──"
-          cat ~/.bubblewrap/config.json
-          echo "── Verifying paths exist ──"
-          test -d "$JAVA_HOME" && echo "✅ JDK path OK" || echo "❌ JDK path missing"
-          test -d "$ANDROID_HOME" && echo "✅ SDK path OK" || echo "❌ SDK path missing"
-
-      # bubblewrap's `build` command has NO --password flag (it's silently
-      # ignored if passed). Passwords are only collected via interactive
-      # stdin prompts, in this exact order:
-      #   1. "...enter 'no' (Y/n)"                → checksum/regenerate prompt
-      #   2. "Password for the Key Store:"         → keystore password
-      #   3. "Password for the Key (ENTER to reuse keystore password):" → blank
-      # We feed all three as separate lines via printf, piped into bubblewrap.
-      - name: Build TWA APK
-        run: |
-          set -o pipefail
-          printf 'no\n%s\n\n' "${{ secrets.KEYSTORE_PASSWORD }}" | \
-            bubblewrap build --skipPwaValidation --skipVersionUpgrade 2>&1 | tee build.log
-          tail -n 80 build.log
+          gradle assembleRelease \
+            -Pandroid.injected.signing.store.file="$(pwd)/android.keystore" \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="splittab" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEYSTORE_PASSWORD }}"
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: SplitTab-Android
-          path: |
-            app-release-signed.apk
-            app-release.apk
+          path: android-twa/app/build/outputs/apk/release/*.apk
