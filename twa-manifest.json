@@ -21,19 +21,18 @@
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://vpradhap.github.io/splittab/manifest.json",
   "fullScopeUrl": "https://vpradhap.github.io/splittab/",
-  "appVersion": "1",
-  "appVersionCode": 1,
-  "signingMode": "mine",
-  "keyStorePath": "../android.keystore",
-  "keyStorePassword": "KEYSTORE_PASS",
-  "keyAlias": "splittab",
-  "keyPassword": "KEYSTORE_PASS",
-  "fingerprints": [],
   "minSdkVersion": 19,
+  "appVersionName": "1.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "splittab"
+  },
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "playBillingEnabled": false,
+  "fallbackType": "customtabs",
   "features": {},
-  "alphaDependencies": { "enabled": false }
+  "alphaDependencies": { "enabled": false },
+  "splashScreenFadeOutDuration": 300
 }

@@ -77,9 +77,6 @@ jobs:
       - name: Restore keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
 
-      - name: Configure keystore password
-        run: sed -i 's/KEYSTORE_PASS/${{ secrets.KEYSTORE_PASSWORD }}/g' twa-manifest.json
-
       # Pre-write bubblewrap's config so it never prompts for JDK/SDK paths.
       - name: Pre-configure Bubblewrap (skip JDK/SDK prompts)
         run: |
@@ -99,16 +96,18 @@ jobs:
           test -d "$JAVA_HOME" && echo "✅ JDK path OK" || echo "❌ JDK path missing"
           test -d "$ANDROID_HOME" && echo "✅ SDK path OK" || echo "❌ SDK path missing"
 
-      # bubblewrap surfaces a handful of y/n prompts (JDK, SDK, checksum/
-      # regenerate). `yes "no"` was piping forever and drowning the real error
-      # in thousands of repeated "no" lines once the prompts were done — so we
-      # cap it at 10 answers with `head -n10`, letting stdin close afterwards
-      # so any genuine build error becomes visible in the log.
+      # twa-manifest.json's signingKey only holds {path, alias} — never the
+      # password (security). Pass both store + key password via --password.
+      # yes "no" (capped at 10) still answers the checksum/regenerate prompt.
       - name: Build TWA APK
         run: |
           set -o pipefail
-          yes "no" | head -n 10 | bubblewrap build --skipPwaValidation --skipVersionUpgrade 2>&1 | tee build.log
-          tail -n 60 build.log
+          yes "no" | head -n 10 | bubblewrap build \
+            --skipPwaValidation \
+            --skipVersionUpgrade \
+            --password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            2>&1 | tee build.log
+          tail -n 80 build.log
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
