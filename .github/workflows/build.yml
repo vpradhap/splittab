@@ -96,17 +96,18 @@ jobs:
           test -d "$JAVA_HOME" && echo "✅ JDK path OK" || echo "❌ JDK path missing"
           test -d "$ANDROID_HOME" && echo "✅ SDK path OK" || echo "❌ SDK path missing"
 
-      # twa-manifest.json's signingKey only holds {path, alias} — never the
-      # password (security). Pass both store + key password via --password.
-      # yes "no" (capped at 10) still answers the checksum/regenerate prompt.
+      # bubblewrap's `build` command has NO --password flag (it's silently
+      # ignored if passed). Passwords are only collected via interactive
+      # stdin prompts, in this exact order:
+      #   1. "...enter 'no' (Y/n)"                → checksum/regenerate prompt
+      #   2. "Password for the Key Store:"         → keystore password
+      #   3. "Password for the Key (ENTER to reuse keystore password):" → blank
+      # We feed all three as separate lines via printf, piped into bubblewrap.
       - name: Build TWA APK
         run: |
           set -o pipefail
-          yes "no" | head -n 10 | bubblewrap build \
-            --skipPwaValidation \
-            --skipVersionUpgrade \
-            --password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            2>&1 | tee build.log
+          printf 'no\n%s\n\n' "${{ secrets.KEYSTORE_PASSWORD }}" | \
+            bubblewrap build --skipPwaValidation --skipVersionUpgrade 2>&1 | tee build.log
           tail -n 80 build.log
 
       - name: Upload Android APK
