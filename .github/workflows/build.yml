@@ -99,8 +99,15 @@ jobs:
           test -d "$JAVA_HOME" && echo "✅ JDK path OK" || echo "❌ JDK path missing"
           test -d "$ANDROID_HOME" && echo "✅ SDK path OK" || echo "❌ SDK path missing"
 
+      # bubblewrap can surface several different y/n prompts depending on repo
+      # state (JDK install, SDK install, checksum/regenerate, version upgrade).
+      # `yes "no"` answers every single prompt with "no" automatically — safe
+      # because "no" is always the correct answer in each case (don't install
+      # JDK/SDK since we already configured paths; don't regenerate project;
+      # don't auto-upgrade). --skipVersionUpgrade additionally suppresses the
+      # version-check prompt entirely at the source.
       - name: Build TWA APK
-        run: bubblewrap build --skipPwaValidation
+        run: yes "no" | bubblewrap build --skipPwaValidation --skipVersionUpgrade
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
