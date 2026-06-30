@@ -99,15 +99,16 @@ jobs:
           test -d "$JAVA_HOME" && echo "✅ JDK path OK" || echo "❌ JDK path missing"
           test -d "$ANDROID_HOME" && echo "✅ SDK path OK" || echo "❌ SDK path missing"
 
-      # bubblewrap can surface several different y/n prompts depending on repo
-      # state (JDK install, SDK install, checksum/regenerate, version upgrade).
-      # `yes "no"` answers every single prompt with "no" automatically — safe
-      # because "no" is always the correct answer in each case (don't install
-      # JDK/SDK since we already configured paths; don't regenerate project;
-      # don't auto-upgrade). --skipVersionUpgrade additionally suppresses the
-      # version-check prompt entirely at the source.
+      # bubblewrap surfaces a handful of y/n prompts (JDK, SDK, checksum/
+      # regenerate). `yes "no"` was piping forever and drowning the real error
+      # in thousands of repeated "no" lines once the prompts were done — so we
+      # cap it at 10 answers with `head -n10`, letting stdin close afterwards
+      # so any genuine build error becomes visible in the log.
       - name: Build TWA APK
-        run: yes "no" | bubblewrap build --skipPwaValidation --skipVersionUpgrade
+        run: |
+          set -o pipefail
+          yes "no" | head -n 10 | bubblewrap build --skipPwaValidation --skipVersionUpgrade 2>&1 | tee build.log
+          tail -n 60 build.log
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
