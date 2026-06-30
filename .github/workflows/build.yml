@@ -74,12 +74,25 @@ jobs:
       - name: Configure keystore password
         run: sed -i 's/KEYSTORE_PASS/${{ secrets.KEYSTORE_PASSWORD }}/g' twa-manifest.json
 
-      # bubblewrap always asks "Do you want Bubblewrap to install the JDK?"
-      # even on `build`. Pipe "No" so it uses the system JDK from setup-java above.
+      # Pre-write bubblewrap's config file so it never asks about JDK or SDK paths.
+      # Without this it prompts twice (JDK install? + JDK path?) and exits 130.
+      - name: Pre-configure Bubblewrap (skip JDK/SDK prompts)
+        run: |
+          mkdir -p ~/.bubblewrap
+          cat > ~/.bubblewrap/config.json << EOF
+          {
+            "jdkPath": "$JAVA_HOME",
+            "androidSdkPath": "$ANDROID_SDK_ROOT"
+          }
+          EOF
+          echo "Bubblewrap config written:"
+          cat ~/.bubblewrap/config.json
+
       - name: Build TWA APK
-        run: echo "No" | bubblewrap build --skipPwaValidation
+        run: bubblewrap build --skipPwaValidation
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
